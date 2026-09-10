@@ -1,6 +1,7 @@
 # Fresh Debug Rebuild
 
-Base: upstream master `8351a570`, mirrored by `src` without local product changes.
+Base: upstream default branch `develop` at `8351a570`, mirrored by `src` without
+local product changes. Upstream uses `main` for its release line, not `master`.
 Development branch: `feat/fresh-setup-rime-sync`.
 Package: `com.osfans.trime.debug.fresh`, displayed as `Trime Fresh (Debug)`.
 This package does not inherit the old debug application's preferences or runtime data.
