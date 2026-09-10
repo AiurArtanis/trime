@@ -126,6 +126,9 @@ class KeyAction(
     }
 
     fun getLabel(keyboard: Keyboard): String {
+        if (label == "☯" && select == "bqfh1") {
+            return com.osfans.trime.data.theme.AstraThemeActions.symbolsLabel(rime.run { statusCached }.isAsciiMode)
+        }
         if (command == "astra_color") {
             return if (com.osfans.trime.data.theme.ColorManager.isDarkScheme) "深色" else "浅色"
         }

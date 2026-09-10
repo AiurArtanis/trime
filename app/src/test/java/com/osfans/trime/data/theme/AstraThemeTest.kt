@@ -10,6 +10,34 @@ class AstraThemeTest : StringSpec({
     fun token(key: com.osfans.trime.data.theme.model.TextKeyboard.TextKey, behavior: KeyBehavior): String? =
         (key.behaviors[behavior] as? KeyActionToken.Plain)?.token
 
+    "Astra follows system mode even after selecting a legacy palette" {
+        listOf("default", "steam", "astra_solar", "astra_luna", "missing").forEach { selected ->
+            listOf(false, true).forEach { night ->
+                ColorSchemeResolver.resolve(astra.colorSchemes, selected, true, night, astra.name).id shouldBe
+                    if (night) "astra_luna" else "astra_solar"
+            }
+        }
+    }
+    "manual mode targets are fixed and survive refresh with system following disabled" {
+        listOf(false, true).forEach { dark ->
+            val target = ColorSchemeResolver.astraModeScheme(astra.colorSchemes, astra.name, dark)!!
+            target.id shouldBe if (dark) "astra_luna" else "astra_solar"
+            listOf(false, true).forEach { night ->
+                ColorSchemeResolver.resolve(astra.colorSchemes, target.id, false, night, astra.name) shouldBe target
+            }
+        }
+        ColorSchemeResolver.astraModeScheme(astra.colorSchemes, "标准", true) shouldBe null
+        ColorSchemeResolver.astraModeScheme(emptyList(), "Astra", true) shouldBe null
+    }
+    "approved palettes include distinct enter colors and paired mode links" {
+        val solar = astra.colorSchemes.single { it.id == "astra_solar" }
+        val luna = astra.colorSchemes.single { it.id == "astra_luna" }
+        solar.colors["benter"] shouldBe "0xffDEC69E"
+        luna.colors["benter"] shouldBe "0xff4A6483"
+        solar.colors["dark_scheme"] shouldBe "astra_luna"
+        luna.colors["light_scheme"] shouldBe "astra_solar"
+    }
+
     "Astra inherits personal sizes without changing Standard" {
         astra.name shouldBe "Astra"
         astra.generalStyle.verticalGap shouldBe 8
@@ -40,9 +68,14 @@ class AstraThemeTest : StringSpec({
             longPress(".") shouldBe "Astra_tilde"
             longPress("space") shouldBe "Mode_switch"
             longPress("Astra_symbols") shouldBe "Astra_color"
+            keys.single { token(it, KeyBehavior.CLICK) == "z" }.labelSymbol shouldBe ""
         }
     }
     "literal long-press symbols differ only where specified" {
+        AstraThemeActions.hint("z", false) shouldBe "·"
+        AstraThemeActions.hint("z", true) shouldBe "-"
+        AstraThemeActions.symbolsLabel(false) shouldBe "☯"
+        AstraThemeActions.symbolsLabel(true) shouldBe "⌘"
         AstraThemeActions.symbol("z", false) shouldBe "·"
         AstraThemeActions.symbol("z", true) shouldBe "_"
         AstraThemeActions.symbol("comma", false) shouldBe "、"

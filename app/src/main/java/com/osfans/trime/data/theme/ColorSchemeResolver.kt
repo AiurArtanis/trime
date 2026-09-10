@@ -14,6 +14,9 @@ import com.osfans.trime.data.theme.model.ColorScheme
  * night state. Extracted from ColorManager so it is unit-testable.
  */
 internal object ColorSchemeResolver {
+    fun astraModeScheme(schemes: List<ColorScheme>, themeName: String?, dark: Boolean): ColorScheme? =
+        if (themeName == "Astra") schemes.find { it.id == if (dark) "astra_luna" else "astra_solar" } else null
+
     private const val DEFAULT_SCHEME = "default"
     private const val LIGHT_SCHEME_KEY = "light_scheme"
     private const val DARK_SCHEME_KEY = "dark_scheme"
@@ -23,7 +26,11 @@ internal object ColorSchemeResolver {
         selectedSchemeId: String,
         followSystemDayNight: Boolean,
         isNightMode: Boolean,
+        themeName: String? = null,
     ): ColorScheme {
+        if (followSystemDayNight) {
+            astraModeScheme(schemes, themeName, isNightMode)?.let { return it }
+        }
         fun scheme(id: String): ColorScheme? = schemes.find { it.id == id }
         fun linkedScheme(source: ColorScheme): ColorScheme? {
             val linkKey = if (isNightMode) DARK_SCHEME_KEY else LIGHT_SCHEME_KEY

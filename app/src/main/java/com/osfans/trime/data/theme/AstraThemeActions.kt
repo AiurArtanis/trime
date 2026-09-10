@@ -9,7 +9,9 @@ internal object AstraThemeActions {
         else -> ""
     }
 
-    fun hint(kind: String, ascii: Boolean): String = if (kind == "z") "-" else symbol(kind, ascii)
+    fun hint(kind: String, ascii: Boolean): String = if (kind == "z" && ascii) "-" else symbol(kind, ascii)
+
+    fun symbolsLabel(ascii: Boolean): String = if (ascii) "⌘" else "☯"
 
     fun themeCatalog(shared: List<ThemeItem>, user: List<ThemeItem>): List<ThemeItem> =
         (user + shared).distinctBy { it.configId }

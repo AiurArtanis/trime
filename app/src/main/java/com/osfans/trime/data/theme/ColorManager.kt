@@ -117,7 +117,8 @@ object ColorManager {
     fun toggleLightDark() {
         val theme = requireScope().theme
         val link = activeColorScheme.colors[if (isDarkScheme) "light_scheme" else "dark_scheme"]
-        val target = theme.colorSchemes.find { it.id == link }
+        val target = ColorSchemeResolver.astraModeScheme(theme.colorSchemes, theme.name, !isDarkScheme)
+            ?: theme.colorSchemes.find { it.id == link }
             ?: theme.colorSchemes.find { it.id == if (isDarkScheme) "default" else "steam" }
             ?: return
         // A deliberate manual choice must survive a subsequent theme refresh.
@@ -132,6 +133,7 @@ object ColorManager {
         selectedSchemeId = prefs.normalModeColor.getValue(),
         followSystemDayNight = prefs.followSystemDayNight.getValue(),
         isNightMode = isNightMode,
+        themeName = theme.name,
     )
 
     /**
