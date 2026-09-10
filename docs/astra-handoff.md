@@ -1,5 +1,13 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-10 astra-4 最新状态
+
+- 切换修复连同 astra-3 工作区已提交为 `4513e1ad`，合并并推送至 `origin/develop`。
+- 当前开发分支 `feat/astra-theme`，主题实现提交 `94277e32`；详细说明见 [astra-4-theme.md](astra-4-theme.md)。主题分支尚未合并到 develop。
+- Astra 独立主题、标准上游布局还原、主题去重、文本符号长按和数字键盘布局完成。259 项测试、lint、签名及仅 ARM64 的包内容检查通过，仍无三星实机验证。
+- NAS 已交付 `trime-astra-4-arm64-v8a-debug.apk`，SHA256 `f834683b1322b5840c2237d2819d0dcb62e68b98f42a51197e7226eacbd3c8e4`，本地/NAS 一致。下一交付编号 astra-5。
+- 安装后需要在主题列表选择 Astra，现有选择不会自动替换。手动长按阴阳图标切换明暗会关闭跟随系统明暗，以持久保存手动选择。
+
 ## 2026-09-10 astra-3 接手后更新
 
 astra-3 已完成源码修复和 NAS 交付，详细证据、改动和限制见 [astra-3-validation.md](astra-3-validation.md)。本文件下文保留 astra-2 接手时的背景；其中“下次 astra-3”“没有重建 APK”等描述属于旧状态。
