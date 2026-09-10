@@ -1,5 +1,12 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-10 astra-6 最新状态
+
+- 当前主线 `develop`。独立 Astra 主题、Solar / Luna 和模式图标、Z 提示修正均已合入；主题配色提交 `a2a6406f`，上游合并提交 `310649ad`。详见 [astra-6-refinements.md](astra-6-refinements.md)。
+- `src` 与上游 `develop` 一致，均为 `15487288`，已推送 `origin/src`。本次上游只新增弹窗配色刷新修复，无冲突合入主线。
+- astra-6 已交付 NAS，262 项测试、lint、ARM64 构建、签名与包内容检查通过；尚无三星实机验证。下一编号 astra-7。
+- 下文为历史记录；其中未提交、未合并和下一编号的描述均按对应版本理解。
+
 ## 2026-09-10 astra-4 最新状态
 
 - 切换修复连同 astra-3 工作区已提交为 `4513e1ad`，合并并推送至 `origin/develop`。
