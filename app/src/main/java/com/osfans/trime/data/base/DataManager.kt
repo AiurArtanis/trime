@@ -117,6 +117,8 @@ object DataManager {
             }
         }
 
+        runCatching { com.osfans.trime.data.sync.ImportedThemeTuning.apply(appContext, userDataDir) }
+            .onFailure { Timber.w(it, "Could not migrate Standard theme overrides") }
         Timber.d("Synced!")
     }
 }

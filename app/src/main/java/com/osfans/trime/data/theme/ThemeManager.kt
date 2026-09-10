@@ -21,7 +21,7 @@ object ThemeManager {
     fun getAllThemes(): List<ThemeItem> {
         val sharedThemes = ThemeFilesManager.listThemes(DataManager.sharedDataDir)
         val userThemes = ThemeFilesManager.listThemes(DataManager.userDataDir)
-        return sharedThemes + userThemes
+        return AstraThemeActions.themeCatalog(sharedThemes, userThemes)
     }
 
     private lateinit var _activeTheme: Theme

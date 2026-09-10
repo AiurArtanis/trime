@@ -34,7 +34,8 @@ object ThemeFilesManager {
                                 val node = Yaml.parseToYamlNode(file.readText()).mapping
                                 node?.get("name")?.string ?: return@decode null
                             } else {
-                                configId.removeSuffix(".trime")
+                                Yaml.parseToYamlNode(it.readText()).mapping?.get("name")?.string
+                                    ?: configId.removeSuffix(".trime")
                             }
                         ThemeItem(configId, name)
                     }.getOrElse { e ->

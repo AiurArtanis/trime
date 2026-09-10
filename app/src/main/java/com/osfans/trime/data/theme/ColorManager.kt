@@ -111,6 +111,20 @@ object ColorManager {
         prefs.normalModeColor.setValue(scheme.id)
     }
 
+    val isDarkScheme: Boolean
+        get() = androidx.core.graphics.ColorUtils.calculateLuminance(getColor("keyboard_back_color")) < 0.5
+
+    fun toggleLightDark() {
+        val theme = requireScope().theme
+        val link = activeColorScheme.colors[if (isDarkScheme) "light_scheme" else "dark_scheme"]
+        val target = theme.colorSchemes.find { it.id == link }
+            ?: theme.colorSchemes.find { it.id == if (isDarkScheme) "default" else "steam" }
+            ?: return
+        // A deliberate manual choice must survive a subsequent theme refresh.
+        prefs.followSystemDayNight.setValue(false)
+        setColorScheme(target)
+    }
+
     private fun requireScope(): ThemeScope = requireNotNull(scope) { "ColorManager is not initialized" }
 
     private fun resolveActiveScheme(theme: Theme): ColorScheme = ColorSchemeResolver.resolve(

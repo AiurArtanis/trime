@@ -164,6 +164,14 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                 val arg = expandActiveText(action.option)
 
                 when (action.command) {
+                    "astra_color" -> com.osfans.trime.data.theme.ColorManager.toggleLightDark()
+                    "astra_symbol" -> service.postRimeJob {
+                        val value = com.osfans.trime.data.theme.AstraThemeActions.symbol(action.option, statusCached.isAsciiMode)
+                        if (value.isNotEmpty()) {
+                            commitComposition()
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { service.commitText(value) }
+                        }
+                    }
                     "liquid_keyboard" -> handleLiquidKeyboard(arg)
                     "menu_keyboard" -> windowManager.attachWindow(SwitchOptionWindow(di))
                     "clipboard_window" -> handleClipboardWindow(arg)

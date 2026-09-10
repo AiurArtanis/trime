@@ -329,11 +329,22 @@ class KeyView(
         bg.draw(canvas)
     }
 
+    private val yinYangIcon by lazy {
+        androidx.appcompat.content.res.AppCompatResources.getDrawable(context, com.osfans.trime.R.drawable.ic_phosphor_yin_yang)!!.mutate()
+    }
+
     private fun drawLabel(canvas: Canvas, label: String) {
         val textColor = key.getTextColor()
         val textSize = sp(key.keyTextSize.takeIf { it > 0 } ?: if (label.length > 1 && !label.isIconFont) keyboardView.keyLongTextSize else keyboardView.keyTextSize)
 
-        if (label.isIconFont) {
+        if (label == "☯") {
+            val centerX = (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(key.keyTextOffsetX)
+            val centerY = (height - paddingTop - paddingBottom) / 2f + paddingTop + sp(key.keyTextOffsetY)
+            val half = textSize / 2
+            yinYangIcon.setTint(textColor)
+            yinYangIcon.setBounds((centerX - half).toInt(), (centerY - half).toInt(), (centerX + half).toInt(), (centerY + half).toInt())
+            yinYangIcon.draw(canvas)
+        } else if (label.isIconFont) {
             drawIcon(canvas, label, textSize.toInt(), textColor, key.keyTextOffsetX, key.keyTextOffsetY)
         } else {
             textPaint.apply {

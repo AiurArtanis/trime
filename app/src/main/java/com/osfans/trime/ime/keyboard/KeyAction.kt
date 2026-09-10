@@ -126,6 +126,12 @@ class KeyAction(
     }
 
     fun getLabel(keyboard: Keyboard): String {
+        if (command == "astra_color") {
+            return if (com.osfans.trime.data.theme.ColorManager.isDarkScheme) "深色" else "浅色"
+        }
+        if (command == "astra_symbol") {
+            return com.osfans.trime.data.theme.AstraThemeActions.hint(option, rime.run { statusCached }.isAsciiMode)
+        }
         ensureLabels()
         if (states.isNotEmpty() && toggle.isNotEmpty()) {
             return states[if (rime.run { getRuntimeOption(toggle) }) 1 else 0]
