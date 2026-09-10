@@ -48,6 +48,11 @@ class SwitchOptionWindow(di: DI) :
     private val staticEntries by lazy {
         arrayOf(
             SwitchOptionEntry.Static(
+                context.getString(R.string.update_rime_ice),
+                R.drawable.ic_baseline_cloud_download_24,
+                SwitchOptionEntry.Static.Type.UpdateRimeIce,
+            ),
+            SwitchOptionEntry.Static(
                 context.getString(R.string.theme),
                 R.drawable.ic_baseline_color_lens_24,
                 SwitchOptionEntry.Static.Type.ThemeList,
@@ -105,6 +110,7 @@ class SwitchOptionWindow(di: DI) :
             ) {
                 when (entry) {
                     is SwitchOptionEntry.Static -> when (entry.type) {
+                        SwitchOptionEntry.Static.Type.UpdateRimeIce -> com.osfans.trime.data.sync.RimeIceUpdate.start(context)
                         SwitchOptionEntry.Static.Type.SchemaList -> showDialog { r ->
                             EnabledSchemaPickerDialog.build(r, service.lifecycleScope, context) {
                                 setNegativeButton(R.string.enable_schemata) { _, _ ->

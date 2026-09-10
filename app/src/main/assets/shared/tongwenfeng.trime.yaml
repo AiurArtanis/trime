@@ -17,7 +17,7 @@ height:
   4: &jpgd4 48 #主键盘
   5: &jpgd5 39.5 #符号键盘
   6: &hgap 4 #键盘横缝大小
-  7: &sgap 12 #键盘竖缝大小
+  7: &sgap 8 #键盘竖缝大小
 
 #键盘高度
 round_corner:
@@ -30,8 +30,9 @@ style:
   auto_caps: false #自動句首大寫:true|false
   candidate_font: han.ttf  #候选字体
   candidate_padding: 5  #候选项内边距
-  candidate_spacing: 0.0  #候选分割线
-  candidate_text_size: 18  #候选字号
+  candidate_spacing: 1.0  #候选分割线
+  candidate_text_size: 22  #候选字号
+  candidate_text_size_by_length_portrait: true
   candidate_text_vertical_bias: 1.0 #候选文本垂直偏移位置（仅 overlay 模式使用，需要间隙空间足够，范围 0.0~1.0，0.0=top，0.5=center，1.0=bottom）
   candidate_view_height: 28 #候选区高度
   comment_font: comment.ttf #编码提示字体
@@ -49,8 +50,8 @@ style:
   label_text_size: 22 #标签字号
   label_font: label.ttf #编标签字体
   latin_font: latin.ttf #西文本体
-  keyboard_height: 250 #锁定键盘高度，避免切换时键盘高度变化而造成闪烁
-  keyboard_height_land: 200 #锁定横屏下键盘高度，避免切换时键盘高度变化而造成闪烁
+  keyboard_height: 230 #锁定键盘高度，避免切换时键盘高度变化而造成闪烁
+  keyboard_height_land: 180 #锁定横屏下键盘高度，避免切换时键盘高度变化而造成闪烁
   popup_font: latin.ttf #按键提示字体
   popup_width: 38 #按键提示宽度
   popup_height: 48 #按键提示高度

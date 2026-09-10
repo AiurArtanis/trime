@@ -32,11 +32,11 @@ class ThemeGoldenTest :
                     theme.name shouldBe "标准"
                     val style = theme.generalStyle
                     style.autoCaps shouldBe false
-                    style.candidateTextSize shouldBe 18f
+                    style.candidateTextSize shouldBe 22f
                     style.keyTextSize shouldBe 24f
                     style.keyWidth shouldBe 10f
-                    style.keyboardHeight shouldBe 250
-                    style.keyboardHeightLand shouldBe 200
+                    style.keyboardHeight shouldBe 230
+                    style.keyboardHeightLand shouldBe 180
                 }
 
                 Then("style values referenced through anchors/aliases resolve to the anchored values") {
@@ -45,7 +45,7 @@ class ThemeGoldenTest :
                     val style = theme.generalStyle
                     style.keyHeight shouldBe 48
                     style.horizontalGap shouldBe 4
-                    style.verticalGap shouldBe 12
+                    style.verticalGap shouldBe 8
                     style.roundCorner shouldBe 6f
                 }
 

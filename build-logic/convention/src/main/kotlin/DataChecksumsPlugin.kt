@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import com.android.build.api.dsl.ApplicationExtension
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import org.gradle.api.DefaultTask
@@ -12,10 +13,12 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.task
 import org.gradle.work.ChangeType
@@ -38,14 +41,60 @@ class DataChecksumsPlugin : Plugin<Project> {
     }
 
     override fun apply(target: Project) {
-        target.tasks.register<DataChecksumsTask>(TASK) {
+        val resolvedAssets = target.layout.buildDirectory.dir("generated/portableAssets")
+        val prepare = target.tasks.register<PortableAssetsTask>("preparePortableAssets") {
             inputDir.set(target.assetsDir)
-            outputFile.set(target.assetsDir.resolve(FILE_NAME))
+            rimeDir.set(target.layout.projectDirectory.dir("data/rime"))
+            outputDir.set(resolvedAssets)
+            dependsOn(OpenCCDataPlugin.INSTALL_TASK)
+        }
+        target.extensions.configure<ApplicationExtension> {
+            sourceSets.getByName("main").assets.setSrcDirs(listOf(resolvedAssets))
+        }
+        target.tasks.register<DataChecksumsTask>(TASK) {
+            dependsOn(prepare)
+            inputDir.set(resolvedAssets)
+            outputFile.set(resolvedAssets.map { it.file(FILE_NAME) })
         }
         target.tasks.register<Delete>(CLEAN_TASK) {
             delete(target.assetsDir.resolve(FILE_NAME))
         }.also {
             target.tasks.findByName("clean")?.dependsOn(it)
+        }
+    }
+
+    abstract class PortableAssetsTask : DefaultTask() {
+        @get:InputDirectory
+        @get:PathSensitive(PathSensitivity.RELATIVE)
+        abstract val inputDir: DirectoryProperty
+
+        @get:InputDirectory
+        @get:PathSensitive(PathSensitivity.RELATIVE)
+        abstract val rimeDir: DirectoryProperty
+
+        @get:OutputDirectory
+        abstract val outputDir: DirectoryProperty
+
+        @TaskAction
+        fun prepare() {
+            val source = inputDir.get().asFile
+            val output = outputDir.get().asFile
+            val rime = rimeDir.get().asFile.canonicalFile.toPath()
+            output.deleteRecursively()
+            source.walkTopDown().filter { it.isFile && it.name != FILE_NAME }.forEach { file ->
+                // Git without symlink privileges checks out a relative path as plain text.
+                val link = if (file.length() < 512) file.readText().trim() else ""
+                val actual = if (link.startsWith("../../../../data/rime/")) {
+                    file.parentFile.resolve(link).canonicalFile.also {
+                        check(it.toPath().startsWith(rime) && it.isFile) { "Missing Rime asset: $it" }
+                    }
+                } else {
+                    file
+                }
+                val destination = output.resolve(file.relativeTo(source))
+                destination.parentFile.mkdirs()
+                actual.copyTo(destination, overwrite = true)
+            }
         }
     }
 

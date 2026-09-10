@@ -68,9 +68,9 @@ android {
             resValue("string", "trime_app_name", "@string/app_name_release")
         }
         debug {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".debug.fresh"
 
-            resValue("string", "trime_app_name", "@string/app_name_debug")
+            resValue("string", "trime_app_name", "Trime Fresh (Debug)")
         }
         all {
             // remove META-INF/version-control-info.textproto

@@ -25,6 +25,7 @@ interface RimeApi {
     suspend fun isEmpty(): Boolean
 
     suspend fun deploy(skipImport: Boolean = false)
+    suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit = {})
 
     suspend fun updateConfig()
 

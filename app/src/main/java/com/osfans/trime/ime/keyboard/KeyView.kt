@@ -45,6 +45,8 @@ class KeyView(
     private val rime get() = RimeDaemon.getFirstSessionOrNull()!!
 
     private val deletedTextBuffer = ArrayDeque<String>()
+    private var compositionHold = false
+    private var compositionCleared = false
 
     private var keyPressed = false
     override fun isPressed(): Boolean = keyPressed
@@ -85,13 +87,31 @@ class KeyView(
         hasPopup = key.popup.isNotEmpty()
 
         onPress = {
+            compositionCleared = false
+            compositionHold = key.click?.let { it.code == KeyEvent.KEYCODE_DEL && it.modifier == 0 } == true &&
+                rime.run { statusCached.isComposing }
+            customLongPressTimeout = if (compositionHold) 600 else null
             if (keyboard.firstPressedKeyIndex == -1) keyboard.firstPressedKeyIndex = id
             setPressedState(true)
             key.getCode(KeyBehavior.CLICK).let { keyboardActionListener.onPress(it) }
             showPopupPreview()
         }
 
-        onRelease = { behavior, isFromLongPress ->
+        onLongPressStart = {
+            if (compositionHold) {
+                service.postRimeJob { clearComposition() }
+                compositionCleared = true
+                setPressedState(false)
+                dismissPopupPreview()
+            }
+            compositionHold
+        }
+
+        onRelease = release@{ behavior, isFromLongPress ->
+            if (compositionCleared) {
+                if (keyboard.firstPressedKeyIndex == id) keyboard.firstPressedKeyIndex = -1
+                return@release
+            }
             Timber.d("KeyView release: label=${key.getLabel()}, behavior=$behavior, fromLongPress=$isFromLongPress")
             if (isFromLongPress) {
                 if (hasPopup) {

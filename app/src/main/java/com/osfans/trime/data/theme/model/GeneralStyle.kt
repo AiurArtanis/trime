@@ -31,6 +31,7 @@ data class GeneralStyle(
     val candidatePadding: Int = 0,
     val candidateSpacing: Float = 0f,
     val candidateTextSize: Float = 15f,
+    val candidateTextSizeByLengthPortrait: Boolean = false,
     val candidateTextVerticalBias: Float = 1f,
     val candidateViewHeight: Int = 28,
     val candidateCornerRadius: Float = 5f,
@@ -126,6 +127,7 @@ data class GeneralStyle(
             candidatePadding = node["candidate_padding"]?.int ?: DEFAULTS.candidatePadding,
             candidateSpacing = node["candidate_spacing"]?.float ?: DEFAULTS.candidateSpacing,
             candidateTextSize = node["candidate_text_size"]?.float ?: DEFAULTS.candidateTextSize,
+            candidateTextSizeByLengthPortrait = node["candidate_text_size_by_length_portrait"]?.boolean ?: false,
             candidateTextVerticalBias = node["candidate_text_vertical_bias"]?.float
                 ?: DEFAULTS.candidateTextVerticalBias,
             candidateViewHeight = node["candidate_view_height"]?.int ?: DEFAULTS.candidateViewHeight,

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_original">Import original Trime</string>
+    <string name="original_source_required">Select the files folder provided by the original Trime app</string>
+    <string name="original_destination_required">Create or select rime in the root of internal storage and grant access</string>
+    <string name="configuration_working">Updating configuration and deploying…</string>
+    <string name="configuration_failed">Configuration update failed: %1$s</string>
+    <string name="update_rime_ice">Update Rime Ice</string>
+</resources>

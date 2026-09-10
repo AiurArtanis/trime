@@ -172,6 +172,17 @@ class CandidateItemUi(
 
         content.background = roundedRippleDrawable(hlBackColor, cornerRadius, contentColor)
         text.text = item.text
+        text.textSize = if (theme.generalStyle.candidateTextSizeByLengthPortrait &&
+            ctx.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+        ) {
+            when (item.text.codePointCount(0, item.text.length)) {
+                1 -> (textSize - 1f).coerceAtLeast(1f)
+                2, 3 -> textSize + 1f
+                else -> textSize
+            }
+        } else {
+            textSize
+        }
         text.setTextColor(tColor)
 
         val commentText = item.comment

@@ -94,7 +94,11 @@ class Rime :
         getCurrentRimeSchema() == ".default" // 無方案
     }
 
-    override suspend fun deploy(skipImport: Boolean) = RimeMaintenanceMutex.withLock {
+    override suspend fun deploy(skipImport: Boolean) = deployConfiguration(skipImport, {}, {})
+
+    override suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = deployConfiguration(true, install, rollback, prepare)
+
+    private suspend fun deployConfiguration(skipImport: Boolean, install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit = {}) = RimeMaintenanceMutex.withLock {
         if (RimeDataSync.usesExternalSync()) {
             if (!RimeDataSync.hasExternalAccess(appContext)) {
                 ExternalSyncFallback.fallbackToAppStorage(appContext)
@@ -123,10 +127,13 @@ class Rime :
                 }
             }
         }
-        registerRimeMessageHandler(deployHandler)
         try {
+            // SAF providers can be slow; keep their I/O off the native dispatcher.
+            withContext(Dispatchers.IO) { prepare() }
             withRimeContext {
                 exitRime()
+                install()
+                registerRimeMessageHandler(deployHandler)
                 startRime(true)
             }
             val success =
@@ -136,14 +143,35 @@ class Rime :
                     }
                 }
             check(success) { "Rime deploy failed" }
+            withRimeContext { emitResponse() }
+        } catch (e: Exception) {
+            withContext(kotlinx.coroutines.NonCancellable) {
+                withRimeContext {
+                    exitRime()
+                    try {
+                        rollback()
+                    } catch (recovery: Exception) {
+                        e.addSuppressed(recovery)
+                    } finally {
+                        try {
+                            startRime(false)
+                        } catch (restart: Exception) {
+                            e.addSuppressed(restart)
+                        }
+                    }
+                }
+            }
+            throw e
         } finally {
             unregisterRimeMessageHandler(deployHandler)
         }
     }
 
-    override suspend fun updateConfig() = withRimeContext {
-        exitRime()
-        startRime(false)
+    override suspend fun updateConfig() = RimeMaintenanceMutex.withLock {
+        withRimeContext {
+            exitRime()
+            startRime(false)
+        }
     }
 
     override suspend fun syncUserData(): Boolean = RimeMaintenanceMutex.withLock {
