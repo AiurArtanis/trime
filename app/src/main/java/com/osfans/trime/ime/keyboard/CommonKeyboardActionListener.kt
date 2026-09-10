@@ -149,19 +149,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
             private fun handleSwitchCharset(action: KeyAction) {
                 val option = action.toggle.ifEmpty { return }
 
-                rime.launchOnReady { api ->
-                    service.lifecycleScope.launch {
-                        val isEnabled = api.getRuntimeOption(option)
-                        val isComposing = api.statusCached.isComposing
-                        api.setRuntimeOption(option, !isEnabled)
-                        if (option == "ascii_mode" && isComposing) {
-                            api.getRawInput().takeIf { it.isNotEmpty() }?.let {
-                                service.commitText(it)
-                                api.clearComposition()
-                            }
-                        }
-                    }
-                }
+                service.postRimeJob { toggleRuntimeOption(option) }
             }
 
             private fun handleLanguageSwitch(action: KeyAction) {

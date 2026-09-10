@@ -25,6 +25,18 @@ class KeyActionTest :
 
         fun plain(token: String) = KeyAction(KeyActionToken.Plain(token), presetKeys)
 
+        given("an Android name table without SWITCH_CHARSET") {
+            then("toolbar and space long-press Mode_switch resolve to the option action") {
+                listOf("trime.yaml", "tongwenfeng.trime.yaml").forEach { themeFile ->
+                    val themeKeys = ThemeTestSupport.decodeBuiltinTheme(themeFile).presetKeys
+                    val action = KeyAction(KeyActionToken.Plain("Mode_switch"), themeKeys)
+                    action.code shouldBe KeyEvent.KEYCODE_SWITCH_CHARSET
+                    action.toggle shouldBe "ascii_mode"
+                    action.text shouldBe ""
+                }
+            }
+        }
+
         given("a token naming a preset key") {
             `when`("the preset sends a plain key") {
                 then("the key code and the preset flags are applied") {

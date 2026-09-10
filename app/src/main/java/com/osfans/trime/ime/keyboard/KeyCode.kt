@@ -20,6 +20,9 @@ object KeyCode {
     fun nameToKeyCode(name: String): Int {
         Timber.d("nameToKeyCode: $name")
         if (name.isEmpty()) return KeyEvent.KEYCODE_UNKNOWN
+        // This is an application action, not a key sent to librime. Resolve it
+        // explicitly instead of depending on the device's Android name table.
+        if (name == "SWITCH_CHARSET") return KeyEvent.KEYCODE_SWITCH_CHARSET
 
         RimeKeyMapping.upperNameToCode(name)?.let { return it }
         RimeKeyMapping.symbolNameToCode(name)?.let { return it }

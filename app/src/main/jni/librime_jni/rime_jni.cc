@@ -57,7 +57,13 @@ class Rime {
     rime->setup(&trime_traits);
     rime->initialize(&trime_traits);
     rime->set_notification_handler(notificationHandler, GlobalRef->jvm);
-    rime->start_maintenance(fullCheck);
+    const bool started = rime->start_maintenance(fullCheck);
+    // A notification is sent before the worker actually exits. Do not expose
+    // sessions or allow configuration replacement until all native work ends.
+    rime->join_maintenance_thread();
+    if (fullCheck && !started) {
+      notificationHandler(GlobalRef->jvm, 0, "deploy", "failure");
+    }
   }
 
   bool deploySchema(std::string_view schemaFile) {
@@ -207,7 +213,9 @@ class Rime {
 
   bool sync() {
     session_.reset();
-    return rime->sync_user_data();
+    const bool started = rime->sync_user_data();
+    rime->join_maintenance_thread();
+    return started;
   }
 
  private:

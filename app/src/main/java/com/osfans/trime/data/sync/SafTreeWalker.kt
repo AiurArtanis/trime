@@ -44,7 +44,7 @@ object SafTreeWalker {
         val normalized = relativePath.trimStart('/').trim().removePrefix("./")
         if (normalized.isEmpty()) return false
         val segments = normalized.split('/')
-        if (segments.any { it == SKIP_DIR }) return true
+        if (segments.any { it == SKIP_DIR || it.endsWith(".bak") || it.startsWith(".") }) return true
         if (!skipUserDb) return false
         val dirSegments = if (isDirectory) segments else segments.dropLast(1)
         return dirSegments.any { it.contains(SKIP_DIR_SUBSTRING) }

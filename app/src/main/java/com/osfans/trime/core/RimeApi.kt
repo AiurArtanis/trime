@@ -82,6 +82,8 @@ interface RimeApi {
 
     suspend fun getRuntimeOption(option: String): Boolean
 
+    suspend fun toggleRuntimeOption(option: String)
+
     suspend fun setNullInputType(value: Boolean)
 
     suspend fun getCandidates(

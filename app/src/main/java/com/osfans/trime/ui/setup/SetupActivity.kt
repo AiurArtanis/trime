@@ -99,6 +99,7 @@ class SetupActivity : FragmentActivity() {
                 )
                 withContext(Dispatchers.IO) {
                     com.osfans.trime.data.sync.ConfigurationTransfer.readOriginal(ctx, source, directory)
+                    com.osfans.trime.data.sync.ConfigurationTransfer.mergeDestination(ctx, destination, directory)
                     com.osfans.trime.data.sync.ImportedThemeTuning.apply(ctx, directory)
                 }
                 val external = com.osfans.trime.data.sync.ExternalConfigurationInstall(
@@ -116,7 +117,7 @@ class SetupActivity : FragmentActivity() {
                 mode.setValue(com.osfans.trime.data.sync.DataStorageMode.APP_STORAGE)
                 val session = com.osfans.trime.daemon.RimeDaemon.createSession(sessionName)
                 sessionCreated = true
-                kotlinx.coroutines.withTimeout(10 * 60 * 1000L) {
+                run {
                     session.runOnReady {
                         replaceConfiguration(
                             { install.install() },
@@ -169,7 +170,13 @@ class SetupActivity : FragmentActivity() {
                 runCatching {
                     withContext(Dispatchers.IO) {
                         RimeDataSync.persistTreeUri(this@SetupActivity, uri)
-                        RimeDataSync.importToLocal(this@SetupActivity).getOrThrow()
+                        val name = "setup-import-${java.util.UUID.randomUUID()}"
+                        val session = com.osfans.trime.daemon.RimeDaemon.createSession(name)
+                        try {
+                            session.runOnReady { deploy() }
+                        } finally {
+                            com.osfans.trime.daemon.RimeDaemon.destroySession(name)
+                        }
                     }
                     refreshCurrentFragment()
                     toast(R.string.setup__data_path_imported)

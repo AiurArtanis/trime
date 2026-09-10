@@ -39,6 +39,7 @@ import splitties.systemservices.clipboardManager
  * Source: [fcitx5-android/LogActivity](https://github.com/fcitx5-android/fcitx5-android/blob/24457e13b7c3f9f59a6f220db7caad3d02f27651/app/src/main/java/org/fcitx/fcitx5/android/ui/main/LogActivity.kt)
  */
 class LogActivity : AppCompatActivity() {
+    private var exportMaintenanceOnly = false
     private lateinit var launcher: ActivityResultLauncher<String>
     private lateinit var logView: LogView
 
@@ -58,8 +59,12 @@ class LogActivity : AppCompatActivity() {
                         withContext(Dispatchers.IO) {
                             contentResolver.openOutputStream(uri)!!.use { os ->
                                 os.bufferedWriter().use {
-                                    it.write(DeviceInfo.get(this@LogActivity))
-                                    it.write(logView.currentLog)
+                                    if (exportMaintenanceOnly) {
+                                        it.write(com.osfans.trime.core.MaintenanceDiagnostics.snapshot())
+                                    } else {
+                                        it.write(DeviceInfo.get(this@LogActivity))
+                                        it.write(logView.currentLog)
+                                    }
                                 }
                             }
                         }
@@ -121,6 +126,7 @@ class LogActivity : AppCompatActivity() {
                 logView.clear()
             }
             exportButton.setOnClickListener {
+                exportMaintenanceOnly = false
                 launcher.launch("$packageName-${iso8601UTCDateTime()}.txt")
             }
             copyButton.setOnClickListener {
@@ -135,5 +141,14 @@ class LogActivity : AppCompatActivity() {
             }
         }
         registerLauncher()
+    }
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menu.add("导出维护诊断（不含输入内容）").setOnMenuItemClickListener {
+            exportMaintenanceOnly = true
+            launcher.launch("astra-maintenance-${iso8601UTCDateTime()}.txt")
+            true
+        }
+        return super.onCreateOptionsMenu(menu)
     }
 }

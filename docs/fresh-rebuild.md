@@ -3,7 +3,7 @@
 Base: upstream default branch `develop` at `8351a570`, mirrored by `src` without
 local product changes. Upstream uses `main` for its release line, not `master`.
 Development branch: `feat/fresh-setup-rime-sync`.
-Package: `com.osfans.trime.debug.fresh`, displayed as `Trime Fresh (Debug)`.
+Package: `com.osfans.trime.debug.fresh`, displayed as `同文输入法(Astra)`.
 This package does not inherit the old debug application's preferences or runtime data.
 
 ## Features
@@ -48,6 +48,18 @@ the app's external files directory. Keep external backups before uninstalling.
 
 ## Build And Verification
 
+### NAS Delivery Naming
+
+Publish debug APKs to `\\192.168.1.171\codex\trime-dev\trime-debug` using
+`trime-astra-N-<abi>-debug.apk`. Increment N once per release, not per ABI.
+Do not overwrite earlier releases. This is a delivery filename only; it does not
+change Android versionName, versionCode or package identity.
+
+Current release: `astra-2` (shared-only original import fix and Astra display name).
+Next release: `astra-3`. Only build and deliver `arm64-v8a` for Samsung phones.
+Replace the previous `fresh-<date>-<commit>` filename
+segment with this version for all future NAS deliveries.
+
 The Windows build prepares real assets from Git's symlink placeholder files before
 generating checksums. It does not rewrite the source checkout. Kotlin incremental
 compilation is disabled to avoid stale interface delegates after branch changes.
@@ -55,7 +67,7 @@ Native per-entry INFO logs are suppressed; warnings/errors remain available.
 
 ```powershell
 . E:/trime-build-env/trime-env.ps1
-$env:BUILD_ABI='arm64-v8a,x86_64'
+$env:BUILD_ABI='arm64-v8a'
 gradle.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --console=plain
 ```
 

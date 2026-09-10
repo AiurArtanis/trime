@@ -168,7 +168,7 @@ object RimeDataSync {
                 DeployNotification.notifyPartialCopyIfNeeded(
                     importStats + removeResult.toCopyResult(),
                     "importToLocal",
-                )
+                ).also { check(it.failed == 0) { "External configuration import incomplete (${it.failed} files)" } }
             }.onFailure { Timber.e(it, "importToLocal failed") }
         }.also { result ->
             if (!keepNotificationUntilDeploySuccess || result.isFailure) {

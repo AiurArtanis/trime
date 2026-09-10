@@ -9,6 +9,12 @@ import io.kotest.matchers.shouldBe
 
 class SafTreeWalkerTest :
     StringSpec({
+        "backups and temporary files never enter the runtime mirror" {
+            SafTreeWalker.shouldSkip("cn_dicts/main.dict.yaml.123.bak") shouldBe true
+            SafTreeWalker.shouldSkip("snapshot.bak/default.yaml", skipUserDb = false) shouldBe true
+            SafTreeWalker.shouldSkip(".install-temporary", skipUserDb = false) shouldBe true
+            SafTreeWalker.shouldSkip("cn_dicts/main.dict.yaml") shouldBe false
+        }
         "should skip any build directory in the path" {
             SafTreeWalker.shouldSkip("build") shouldBe true
             SafTreeWalker.shouldSkip("foo/build") shouldBe true

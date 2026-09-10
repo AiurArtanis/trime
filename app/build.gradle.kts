@@ -70,7 +70,7 @@ android {
         debug {
             applicationIdSuffix = ".debug.fresh"
 
-            resValue("string", "trime_app_name", "Trime Fresh (Debug)")
+            resValue("string", "trime_app_name", "同文输入法(Astra)")
         }
         all {
             // remove META-INF/version-control-info.textproto

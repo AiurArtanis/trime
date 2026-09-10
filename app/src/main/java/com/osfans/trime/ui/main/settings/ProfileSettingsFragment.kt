@@ -132,8 +132,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                 runCatching {
                     withContext(Dispatchers.IO) {
                         RimeDataSync.persistTreeUri(ctx, uri)
-                        RimeDataSync.importToLocal(ctx).getOrThrow()
-                        viewModel.rime.runOnReady { deploy(skipImport = true) }
+                        viewModel.rime.runOnReady { deploy() }
                     }
                 }.onSuccess {
                     updateDataPathSummary()

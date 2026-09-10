@@ -131,8 +131,24 @@ object ThemeManager {
      * Loading runs on [Dispatchers.IO]; state changes and listener callbacks run on the main thread.
      * @return the config id actually in effect; differs from [configId] when a fallback was used.
      */
-    suspend fun selectTheme(configId: String): String {
-        val resolvedTheme = withContext(Dispatchers.IO) { getThemeById(configId) }
+    suspend fun selectTheme(configId: String, importExternal: Boolean = false): String {
+        val resolvedTheme = withContext(Dispatchers.IO) {
+            val name = "theme-${java.util.UUID.randomUUID()}"
+            val session = com.osfans.trime.daemon.RimeDaemon.createSession(name)
+            try {
+                session.runOnReady {
+                    com.osfans.trime.core.RimeMaintenanceMutex.withLock {
+                        if (importExternal) {
+                            com.osfans.trime.data.sync.RimeDataSync.importThemeToLocal(configId = configId)
+                                .onFailure { Timber.w(it, "Theme import failed") }
+                        }
+                        getThemeById(configId)
+                    }
+                }
+            } finally {
+                com.osfans.trime.daemon.RimeDaemon.destroySession(name)
+            }
+        }
         return withContext(Dispatchers.Main.immediate) {
             applyTheme(resolvedTheme)
             prefs.selectedTheme.setValue(resolvedTheme.configId)
