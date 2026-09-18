@@ -1022,7 +1022,7 @@ liquid_keyboard:
       - Return2
       - clipboard_window
       - liquid_keyboard_tabs
-  keyboards: [emoji, math, ascii, cn, history, symbollist, list, ids, symbol, tabs, pinyin, script_symbols, jp, grease, rusa, korea, lation, yinbiao, unit, yanwenzi, combing, emoji_full]  #tab列表
+  keyboards: [history, emoji, math, ascii, cn, symbollist, list, ids, symbol, tabs, pinyin, script_symbols, jp, grease, rusa, korea, lation, yinbiao, unit, yanwenzi, combing, emoji_full]  #tab列表
   tabs:
     name: 更多
     type: TABS
@@ -1174,7 +1174,7 @@ tool_bar:
     foreground:
       style: "ic@emoticon"
     # 前景样式可以为空，使用默认样式，按钮将显示为 action 的 label
-    action: liquid_keyboard_emoji
+    action: liquid_keyboard_history
 
   clipboard_button: &clipboard_button
     foreground:
@@ -4164,6 +4164,7 @@ preset_keys:
   liquid_keyboard_switch: { label: 更多, send: FUNCTION, command: liquid_keyboard, option: "特殊" }
   liquid_keyboard_tabs: { label: 更多, send: FUNCTION, command: liquid_keyboard, option: "更多" }
   liquid_keyboard_emoji: { label: 🙂, send: FUNCTION, command: liquid_keyboard, option: "emoji" }
+  liquid_keyboard_history: { label: 🙂, send: FUNCTION, command: liquid_keyboard, option: "history" }
   menu_keyboard: { label: 菜单, send: FUNCTION, command: menu_keyboard }
   clipboard_window: { label: "剪贴", send: FUNCTION, command: "clipboard_window", option: '0' } #0剪贴板，1收藏夹
   # rime状态

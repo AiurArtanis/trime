@@ -1,5 +1,11 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-19 astra-7 最新状态
+
+- Astra 符号页将“常用”（HISTORY）移至 emoji 前，其他标签相对顺序和内容保持不变。工具栏符号按钮使用独立的 `liquid_keyboard_history` 动作，每次打开明确选中常用页；原有 emoji 动作保留。
+- 仅改动 Astra YAML。语义比对确认除顺序和入口外配置不变；ARM64 构建、262 项测试、签名、包名、显示名及 ABI 检查通过，未重复运行 lint。尚无三星实机验证。
+- NAS 交付 `trime-astra-7-arm64-v8a-debug.apk`，同目录 `.sha256` 记录哈希，复制前后哈希一致。日志：`E:\trime-build-env\astra-7-validation.log`。下一编号 astra-8。
+
 ## 2026-09-10 astra-6 最新状态
 
 - 当前主线 `develop`。独立 Astra 主题、Solar / Luna 和模式图标、Z 提示修正均已合入；主题配色提交 `a2a6406f`，上游合并提交 `310649ad`。详见 [astra-6-refinements.md](astra-6-refinements.md)。
