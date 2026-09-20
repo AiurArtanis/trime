@@ -1,5 +1,12 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-20 astra-8 最新状态
+
+- 按用户新要求，将 Astra 两个文本键盘的长按空格从 `Mode_switch` 改为 `VOICE_ASSIST`，提示自动显示“语音”。点击空格、滑动动作及工具栏中英文切换保持原样。
+- 复用现有 `switchToVoiceInputMethod`：优先匹配设置中的“首选语音输入法”（用户选择 Whisper+），不可用时采用已有的首个语音输入法回退逻辑。此前主文本键盘没有语音入口，只有其他备用布局存在绑定。
+- YAML 语义比对确认仅两处长按绑定改变，更新现有布局测试；262 项测试、ARM64 构建、签名及包标识检查通过。未进行三星/Whisper+ 实机验证。
+- NAS 交付 `trime-astra-8-arm64-v8a-debug.apk`，同目录 `.sha256` 记录哈希，复制前后相同。构建日志 `E:\trime-build-env\astra-8-validation.log`，下一编号 astra-9。
+
 ## 2026-09-19 astra-7 最新状态
 
 - Astra 符号页将“常用”（HISTORY）移至 emoji 前，其他标签相对顺序和内容保持不变。工具栏符号按钮使用独立的 `liquid_keyboard_history` 动作，每次打开明确选中常用页；原有 emoji 动作保留。

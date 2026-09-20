@@ -59,14 +59,14 @@ class AstraThemeTest : StringSpec({
             listOf("Keyboard_default", ".", "0", "=", "/", "Return"),
         )
     }
-    "both text layouts keep mode switching and new long-press actions" {
+    "both text layouts expose voice input and symbol long-press actions" {
         listOf("default", "letter").forEach { layout ->
             val keys = astra.presetKeyboards.getValue(layout).keys
             fun longPress(click: String) = token(keys.single { token(it, KeyBehavior.CLICK) == click }, KeyBehavior.LONG_CLICK)
             longPress("z") shouldBe "Astra_z_symbol"
             longPress(",") shouldBe "Astra_comma_symbol"
             longPress(".") shouldBe "Astra_tilde"
-            longPress("space") shouldBe "Mode_switch"
+            longPress("space") shouldBe "VOICE_ASSIST"
             longPress("Astra_symbols") shouldBe "Astra_color"
             keys.single { token(it, KeyBehavior.CLICK) == "z" }.labelSymbol shouldBe ""
         }
