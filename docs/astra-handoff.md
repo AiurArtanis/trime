@@ -1,5 +1,11 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-25 astra-9 最新状态
+
+- 拼音候选成功上屏后，emoji 自动合并到“常用”记录；普通文字不收录，组合表情保持完整。修复面板旧缓存可能覆盖候选新增历史的问题。详见 [astra-9-emoji-history.md](astra-9-emoji-history.md)。
+- ARM64 构建、265 项测试及 lint 通过，APK 签名、包名、显示名、ABI 检查通过；尚无三星实机验证。
+- NAS 交付 `trime-astra-9-arm64-v8a-debug.apk`，同目录 `.sha256` 记录哈希，本地/NAS 一致。日志 `E:\trime-build-env\astra-9-validation.log`。下一编号 astra-10。
+
 ## 2026-09-20 astra-8 最新状态
 
 - 按用户新要求，将 Astra 两个文本键盘的长按空格从 `Mode_switch` 改为 `VOICE_ASSIST`，提示自动显示“语音”。点击空格、滑动动作及工具栏中英文切换保持原样。

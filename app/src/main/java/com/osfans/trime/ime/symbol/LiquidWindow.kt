@@ -53,8 +53,7 @@ class LiquidWindow(di: DI) :
                 else -> {
                     service.commitText(this.text)
                     if (currentDataType != LiquidData.Type.HISTORY) {
-                        symbolHistory.insert(this.text)
-                        symbolHistory.save()
+                        symbolHistory.record(listOf(this.text))
                     }
                 }
             }

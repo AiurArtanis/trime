@@ -8,15 +8,16 @@ import com.osfans.trime.util.appContext
 
 class SymbolHistory(
     val capacity: Int,
+    private val file: java.io.File = appContext.filesDir.resolve(FILE_NAME),
 ) : LinkedHashMap<String, String>(0, .75f, true) {
     companion object {
         const val FILE_NAME = "symbol_history"
+        private val fileLock = Any()
     }
 
-    private val file = appContext.filesDir.resolve(FILE_NAME).apply { createNewFile() }
-
-    fun load() {
-        val all = file.readLines()
+    fun load() = synchronized(fileLock) {
+        val all = if (file.exists()) file.readLines() else emptyList()
+        clear()
         all.forEach {
             if (it.isNotBlank()) {
                 put(it, it)
@@ -24,8 +25,17 @@ class SymbolHistory(
         }
     }
 
-    fun save() {
+    fun save() = synchronized(fileLock) {
         file.writeText(values.joinToString("\n"))
+    }
+
+    /** Merge with the latest persisted history, including commits from another view instance. */
+    fun record(items: List<String>) = synchronized(fileLock) {
+        if (items.isNotEmpty()) {
+            load()
+            items.filter { it.isNotBlank() }.forEach { insert(it) }
+            save()
+        }
     }
 
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > capacity

@@ -91,6 +91,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     private val rimeIntentReceiver = RimeIntentReceiver()
 
     private var lastCommittedText: String = ""
+    private val committedSymbolHistory by lazy { com.osfans.trime.data.SymbolHistory(180) }
 
     private var composingText: String = ""
 
@@ -214,7 +215,13 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         when (it) {
             is RimeMessage.CommitTextMessage -> {
                 if (!it.data.text.isNullOrEmpty()) {
-                    commitText(it.data.text)
+                    if (commitText(it.data.text)) {
+                        val emoji = com.osfans.trime.data.CommittedEmoji.extract(it.data.text)
+                        if (emoji.isNotEmpty()) {
+                            runCatching { committedSymbolHistory.record(emoji) }
+                                .onFailure { Timber.w(it, "Failed to save committed emoji history") }
+                        }
+                    }
                 }
             }
             is RimeMessage.InlinePreeditMessage -> {
@@ -593,11 +600,11 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         InputFeedbackManager.finishInput()
     }
 
-    fun commitText(text: String) {
-        val ic = currentInputConnection ?: return
+    fun commitText(text: String): Boolean {
+        val ic = currentInputConnection ?: return false
 
         // when composing text equals commit content, finish composing text as-is
-        if (composingText.isNotEmpty() && composingText == text) {
+        val committed = if (composingText.isNotEmpty() && composingText == text) {
             ic.finishComposingText()
         } else {
             ic.commitText(text, 1)
@@ -605,6 +612,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         lastCommittedText = text
         composingText = ""
         InputFeedbackManager.textCommitSpeak(text)
+        return committed
     }
 
     /**
