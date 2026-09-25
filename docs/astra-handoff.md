@@ -1,5 +1,11 @@
 # 同文输入法(Astra) 开发交接
 
+## astra-10 最新状态
+
+- 用户实机确认 astra-9 功能正常；本版扩展纯符号候选收录，支持 `dayu → ＞`、`wuxian → ∞`，沿用 emoji 的历史保存机制。普通文本中的标点不收录。详见 [astra-10-symbol-history.md](astra-10-symbol-history.md)。
+- ARM64 构建、268 项测试、lint、APK 签名与包标识检查通过。本版尚未实机验证。
+- NAS 交付 `trime-astra-10-arm64-v8a-debug.apk`，同目录 `.sha256` 保存哈希，本地/NAS 一致。下一编号 astra-11。
+
 ## 2026-09-25 astra-9 最新状态
 
 - 拼音候选成功上屏后，emoji 自动合并到“常用”记录；普通文字不收录，组合表情保持完整。修复面板旧缓存可能覆盖候选新增历史的问题。详见 [astra-9-emoji-history.md](astra-9-emoji-history.md)。

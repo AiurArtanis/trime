@@ -216,10 +216,10 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
             is RimeMessage.CommitTextMessage -> {
                 if (!it.data.text.isNullOrEmpty()) {
                     if (commitText(it.data.text)) {
-                        val emoji = com.osfans.trime.data.CommittedEmoji.extract(it.data.text)
-                        if (emoji.isNotEmpty()) {
-                            runCatching { committedSymbolHistory.record(emoji) }
-                                .onFailure { Timber.w(it, "Failed to save committed emoji history") }
+                        val symbols = com.osfans.trime.data.CommittedSymbols.extract(it.data.text)
+                        if (symbols.isNotEmpty()) {
+                            runCatching { committedSymbolHistory.record(symbols) }
+                                .onFailure { Timber.w(it, "Failed to save committed symbol history") }
                         }
                     }
                 }
