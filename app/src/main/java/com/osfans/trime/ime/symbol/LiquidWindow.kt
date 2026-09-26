@@ -51,9 +51,9 @@ class LiquidWindow(di: DI) :
                     setDataByIndex(realPosition)
                 }
                 else -> {
-                    service.commitText(this.text)
-                    if (currentDataType != LiquidData.Type.HISTORY) {
-                        symbolHistory.record(listOf(this.text))
+                    if (service.commitText(this.text)) {
+                        runCatching { symbolHistory.record(listOf(this.text)) }
+                            .onFailure { timber.log.Timber.w(it, "Failed to save symbol usage") }
                     }
                 }
             }

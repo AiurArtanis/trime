@@ -30,6 +30,7 @@ class CommittedEmojiTest : StringSpec({
             panel.load()
             panel.toOrderedList() shouldBe restored.toOrderedList()
         } finally {
+            java.io.File(file.path + ".legacy.bak").delete()
             file.delete()
         }
     }

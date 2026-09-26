@@ -1,5 +1,11 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-27 astra-11 最新状态
+
+- 常用符号改为使用次数降序，同次数最近使用优先；修复常用页点击未累计的问题。重新进入常用页显示新排序，不在连续点击期间跳位。旧记录备份并按每项 1 次迁移，详见 [astra-11-symbol-frequency.md](astra-11-symbol-frequency.md)。
+- ARM64 构建、270 项测试、lint、签名和包标识检查通过；尚未实机验证。
+- NAS 交付 `trime-astra-11-arm64-v8a-debug.apk`，同目录 `.sha256` 记录校验和，复制前后相同。下一编号 astra-12。
+
 ## astra-10 最新状态
 
 - 用户实机确认 astra-9 功能正常；本版扩展纯符号候选收录，支持 `dayu → ＞`、`wuxian → ∞`，沿用 emoji 的历史保存机制。普通文本中的标点不收录。详见 [astra-10-symbol-history.md](astra-10-symbol-history.md)。

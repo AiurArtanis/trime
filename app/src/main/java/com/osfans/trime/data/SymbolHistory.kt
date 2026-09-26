@@ -1,5 +1,4 @@
 // SPDX-FileCopyrightText: 2015 - 2024 Rime community
-//
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package com.osfans.trime.data
@@ -9,38 +8,56 @@ import com.osfans.trime.util.appContext
 class SymbolHistory(
     val capacity: Int,
     private val file: java.io.File = appContext.filesDir.resolve(FILE_NAME),
-) : LinkedHashMap<String, String>(0, .75f, true) {
+) {
     companion object {
         const val FILE_NAME = "symbol_history"
+        private const val FORMAT = "#astra-symbol-history-v2"
         private val fileLock = Any()
     }
 
+    // Insertion order stores recency, oldest first; counts determine display priority.
+    private val counts = linkedMapOf<String, Long>()
+
     fun load() = synchronized(fileLock) {
-        val all = if (file.exists()) file.readLines() else emptyList()
-        clear()
-        all.forEach {
-            if (it.isNotBlank()) {
-                put(it, it)
-            }
+        val lines = if (file.exists()) file.readLines() else emptyList()
+        counts.clear()
+        val versioned = lines.firstOrNull() == FORMAT
+        (if (versioned) lines.drop(1) else lines).forEach { line ->
+            val fields = if (versioned) line.split('\t', limit = 2) else emptyList()
+            val symbol = if (versioned) fields.getOrNull(1).orEmpty() else line
+            val count = if (versioned) fields.firstOrNull()?.toLongOrNull()?.coerceAtLeast(1) ?: 1L else 1L
+            if (symbol.isNotBlank()) counts[symbol] = count
         }
+        trim()
     }
 
-    fun save() = synchronized(fileLock) {
-        file.writeText(values.joinToString("\n"))
+    private fun save() {
+        // Preserve the original uncounted history on the first upgrade.
+        if (file.exists() && file.useLines { it.firstOrNull() } != FORMAT) {
+            val backup = java.io.File(file.path + ".legacy.bak")
+            if (!backup.exists()) file.copyTo(backup)
+        }
+        file.writeText(FORMAT + "\n" + counts.entries.joinToString("\n") { (symbol, count) -> "$count\t$symbol" })
     }
 
-    /** Merge with the latest persisted history, including commits from another view instance. */
+    /** Reload before merging so different input paths cannot overwrite each other's counts. */
     fun record(items: List<String>) = synchronized(fileLock) {
-        if (items.isNotEmpty()) {
+        val symbols = items.filter { it.isNotBlank() && '\n' !in it && '\r' !in it }.distinct()
+        if (symbols.isNotEmpty()) {
             load()
-            items.filter { it.isNotBlank() }.forEach { insert(it) }
+            symbols.forEach { symbol ->
+                val previous = counts.remove(symbol) ?: 0L
+                counts[symbol] = if (previous == Long.MAX_VALUE) previous else previous + 1
+            }
+            trim()
             save()
         }
     }
 
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > capacity
+    private fun trim() {
+        while (counts.size > capacity.coerceAtLeast(0)) counts.remove(counts.keys.first())
+    }
 
-    fun insert(s: String) = put(s, s)
-
-    fun toOrderedList() = values.toList().reversed()
+    fun toOrderedList(): List<String> = counts.entries.toList().asReversed()
+        .sortedByDescending { it.value }.map { it.key }
 }
