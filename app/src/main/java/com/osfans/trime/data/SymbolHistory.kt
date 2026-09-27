@@ -13,6 +13,12 @@ class SymbolHistory(
         const val FILE_NAME = "symbol_history"
         private const val FORMAT = "#astra-symbol-history-v2"
         private val fileLock = Any()
+        // Explicit list: do not discard mathematical signs or emoji by Unicode category.
+        private const val COMMON_PUNCTUATION = ",，.。．:：;；、!！?？\"'＂＇“”‘’「」『』()（）[]【】{}｛｝《》〈〉…—–"
+
+        private fun shouldKeep(symbol: String): Boolean =
+            symbol.isNotBlank() && '\n' !in symbol && '\r' !in symbol &&
+                symbol.any { !it.isWhitespace() && it !in COMMON_PUNCTUATION && it != '\uFE0E' && it != '\uFE0F' }
     }
 
     // Insertion order stores recency, oldest first; counts determine display priority.
@@ -26,7 +32,7 @@ class SymbolHistory(
             val fields = if (versioned) line.split('\t', limit = 2) else emptyList()
             val symbol = if (versioned) fields.getOrNull(1).orEmpty() else line
             val count = if (versioned) fields.firstOrNull()?.toLongOrNull()?.coerceAtLeast(1) ?: 1L else 1L
-            if (symbol.isNotBlank()) counts[symbol] = count
+            if (shouldKeep(symbol)) counts[symbol] = count
         }
         trim()
     }
@@ -42,7 +48,7 @@ class SymbolHistory(
 
     /** Reload before merging so different input paths cannot overwrite each other's counts. */
     fun record(items: List<String>) = synchronized(fileLock) {
-        val symbols = items.filter { it.isNotBlank() && '\n' !in it && '\r' !in it }.distinct()
+        val symbols = items.filter(::shouldKeep).distinct()
         if (symbols.isNotEmpty()) {
             load()
             symbols.forEach { symbol ->

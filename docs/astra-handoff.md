@@ -1,5 +1,11 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-09-27 astra-12 最新状态
+
+- 常用栏在统一记录和加载入口排除常见中英文标点，已有条目也在重新进入时过滤，保留数学符号、箭头、中点、emoji 及原频次规则。详见 [astra-12-punctuation-filter.md](astra-12-punctuation-filter.md)。
+- ARM64 构建、271 项测试、lint、签名及包标识检查通过；尚未实机验证。
+- NAS 交付 `trime-astra-12-arm64-v8a-debug.apk`，同目录 `.sha256` 记录哈希，复制前后相同。下一编号 astra-13。
+
 ## 2026-09-27 astra-11 最新状态
 
 - 常用符号改为使用次数降序，同次数最近使用优先；修复常用页点击未累计的问题。重新进入常用页显示新排序，不在连续点击期间跳位。旧记录备份并按每项 1 次迁移，详见 [astra-11-symbol-frequency.md](astra-11-symbol-frequency.md)。

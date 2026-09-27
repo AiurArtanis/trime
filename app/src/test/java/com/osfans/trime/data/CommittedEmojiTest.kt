@@ -19,7 +19,7 @@ class CommittedEmojiTest : StringSpec({
         try {
             val panel = SymbolHistory(3, file)
             val candidates = SymbolHistory(3, file)
-            panel.record(listOf("。", "😂"))
+            panel.record(listOf("∞", "😂"))
             candidates.record(CommittedEmoji.extract("🤬"))
             panel.record(listOf("👍"))
             candidates.record(listOf("🤬"))
