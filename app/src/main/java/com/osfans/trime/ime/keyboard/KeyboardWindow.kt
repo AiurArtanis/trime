@@ -378,6 +378,11 @@ class KeyboardWindow(di: DI) :
                         .onAction(KeyActionManager.getAction(what))
                 }
             }
+
+            option == "ascii_mode" && !value.value -> {
+                // 回到中文时，释放 Shift 锁定
+                activeKeyboard?.resetShift()
+            }
         }
         currentKeyboardView?.invalidateAllKeys()
     }
