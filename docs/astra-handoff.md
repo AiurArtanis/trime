@@ -1,5 +1,12 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-10-13 astra-13 最新状态
+
+- `src` 已完整同步上游 `e4934abf`（新增 41 个提交）并推送；个人主线仍是 `develop`。
+- 个人主线选择性合入符号面板 `ascii_punct` 选项名修正，以及切回中文解除 Shift 锁定；主题、存储、Direct Boot 等大型重构暂缓。提交来源与取舍详见 [astra-13-upstream-sync.md](astra-13-upstream-sync.md)。
+- ARM64 构建、271 项测试（0 失败、0 跳过）、lint、签名及包标识检查通过；尚未进行三星实机验证。
+- NAS 交付 `trime-astra-13-arm64-v8a-debug.apk`，同目录 `.sha256` 记录哈希，本地与 NAS 一致。下一编号 astra-14。
+
 ## 2026-09-27 astra-12 最新状态
 
 - 常用栏在统一记录和加载入口排除常见中英文标点，已有条目也在重新进入时过滤，保留数学符号、箭头、中点、emoji 及原频次规则。详见 [astra-12-punctuation-filter.md](astra-12-punctuation-filter.md)。
