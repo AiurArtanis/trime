@@ -12,6 +12,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <uses-permission android:name="android.permission.INTERNET" />
     <queries>
         <provider android:authorities="com.osfans.trime.provider" />
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
     </queries>
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
