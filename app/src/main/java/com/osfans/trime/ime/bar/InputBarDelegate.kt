@@ -133,6 +133,9 @@ class InputBarDelegate(override val di: DI) :
 
     private val alwaysUi: AlwaysUi by lazy {
         AlwaysUi(context, scope) { action ->
+            // A touch that started on the toolbar can finish after candidates replace it.
+            // ViewAnimator keeps that touch target even when its child becomes GONE.
+            if (barStateMachine.currentState != QuickBarStateMachine.State.Always) return@AlwaysUi
             if (action.isNotEmpty()) {
                 commonKeyboardActionListener.listener.onAction(KeyActionManager.getAction(action))
             } else {
