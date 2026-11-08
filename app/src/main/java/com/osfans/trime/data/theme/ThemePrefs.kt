@@ -64,6 +64,15 @@ class ThemePrefs(
             false,
         )
 
+    /** Restore Astra's automatic colors once after older toggles disabled following. */
+    fun migrateAstraDayNight(themeName: String) {
+        if (themeName != "Astra" || sharedPreferences.getBoolean("astra_day_night_v2", false)) return
+        sharedPreferences.edit {
+            putBoolean("astra_day_night_v2", true)
+            putBoolean(FOLLOW_SYSTEM_DAY_NIGHT, true)
+        }
+    }
+
     companion object {
         const val SELECTED_THEME = "selected_theme"
         const val NORMAL_MODE_COLOR = "normal_mode_color"

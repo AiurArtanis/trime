@@ -14,7 +14,7 @@ class SymbolHistory(
         private const val FORMAT = "#astra-symbol-history-v2"
         private val fileLock = Any()
         // Explicit list: do not discard mathematical signs or emoji by Unicode category.
-        private const val COMMON_PUNCTUATION = ",，.。．:：;；、!！?？\"'＂＇“”‘’「」『』()（）[]【】{}｛｝《》〈〉…—–"
+        private const val COMMON_PUNCTUATION = ",，.。．:：;；、!！?？\"'＂＇“”‘’「」『』()（）[]【】{}｛｝《》〈〉…—–@＠/／%％#＃"
 
         private fun shouldKeep(symbol: String): Boolean =
             symbol.isNotBlank() && '\n' !in symbol && '\r' !in symbol &&

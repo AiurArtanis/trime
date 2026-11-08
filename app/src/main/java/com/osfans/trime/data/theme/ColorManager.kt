@@ -15,10 +15,12 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.NinePatchDrawable
 import androidx.annotation.ColorInt
+import androidx.annotation.Keep
 import androidx.collection.LruCache
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.math.MathUtils
 import com.osfans.trime.data.base.DataManager
+import com.osfans.trime.data.prefs.PreferenceDelegate
 import com.osfans.trime.data.theme.model.ColorScheme
 import com.osfans.trime.util.ColorUtils
 import com.osfans.trime.util.NinePatchBitmapFactory
@@ -39,7 +41,17 @@ object ColorManager {
     private var scope: ThemeScope? = null
     private val prefs = ThemeManager.prefs
 
-    private var isNightMode = false
+    private val dayNightState = DayNightSchemeState()
+
+    @Keep
+    private val followModeListener = PreferenceDelegate.OnChangeListener<Boolean> { _, _ ->
+        dayNightState.manualSchemeId = null
+        activateScheme(notify = true)
+    }
+
+    init {
+        prefs.followSystemDayNight.registerOnChangeListener(followModeListener)
+    }
 
     val activeColorScheme: ColorScheme
         get() = requireNotNull(requireScope().activeColorScheme) { "ColorManager is not initialized" }
@@ -74,7 +86,7 @@ object ColorManager {
     }
 
     fun init(configuration: Configuration) {
-        isNightMode = configuration.isNightMode()
+        dayNightState.updateSystemMode(configuration.isNightMode())
         activateScheme(notify = false)
 
         val maxMemory = Runtime.getRuntime().maxMemory() / 1024
@@ -89,7 +101,7 @@ object ColorManager {
     }
 
     fun onSystemNightModeChange(isNight: Boolean) {
-        isNightMode = isNight
+        dayNightState.updateSystemMode(isNight)
         activateScheme(notify = true)
     }
 
@@ -101,14 +113,17 @@ object ColorManager {
      * through ThemeManager, so no color listener fires here.
      */
     fun attachTheme(theme: Theme) {
+        prefs.migrateAstraDayNight(theme.name)
+        dayNightState.manualSchemeId = null
         bitmapCache?.evictAll()
         scope = ThemeScope(theme)
         activateScheme(notify = false)
     }
 
     fun setColorScheme(scheme: ColorScheme) {
-        activateScheme(scheme, notify = true)
+        dayNightState.manualSchemeId = scheme.id
         prefs.normalModeColor.setValue(scheme.id)
+        activateScheme(scheme, notify = true)
     }
 
     val isDarkScheme: Boolean
@@ -121,20 +136,20 @@ object ColorManager {
             ?: theme.colorSchemes.find { it.id == link }
             ?: theme.colorSchemes.find { it.id == if (isDarkScheme) "default" else "steam" }
             ?: return
-        // A deliberate manual choice must survive a subsequent theme refresh.
-        prefs.followSystemDayNight.setValue(false)
+        // Do not permanently disable following the system when using the keyboard toggle.
         setColorScheme(target)
     }
 
     private fun requireScope(): ThemeScope = requireNotNull(scope) { "ColorManager is not initialized" }
 
-    private fun resolveActiveScheme(theme: Theme): ColorScheme = ColorSchemeResolver.resolve(
-        schemes = theme.colorSchemes,
-        selectedSchemeId = prefs.normalModeColor.getValue(),
-        followSystemDayNight = prefs.followSystemDayNight.getValue(),
-        isNightMode = isNightMode,
-        themeName = theme.name,
-    )
+    private fun resolveActiveScheme(theme: Theme): ColorScheme =
+        theme.colorSchemes.find { it.id == dayNightState.manualSchemeId } ?: ColorSchemeResolver.resolve(
+            schemes = theme.colorSchemes,
+            selectedSchemeId = prefs.normalModeColor.getValue(),
+            followSystemDayNight = prefs.followSystemDayNight.getValue(),
+            isNightMode = dayNightState.isNight,
+            themeName = theme.name,
+        )
 
     /**
      * Re-resolves the active scheme from the prefs and current theme, or

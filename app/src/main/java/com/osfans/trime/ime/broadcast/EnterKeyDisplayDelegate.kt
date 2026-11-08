@@ -27,7 +27,7 @@ class EnterKeyDisplayDelegate(override val di: DI) : DIAware {
         CUSTOM_PREFERRED,
     }
 
-    val mode: Mode = runCatching { Mode.entries[theme.style.enterLabelMode] }.getOrDefault(Mode.ACTION_LABEL_NEVER)
+    val mode: Mode = runCatching { Mode.entries[theme.generalStyle.enterLabelMode] }.getOrDefault(Mode.ACTION_LABEL_NEVER)
 
     var keyLabel: String = DEFAULT_LABEL
         private set

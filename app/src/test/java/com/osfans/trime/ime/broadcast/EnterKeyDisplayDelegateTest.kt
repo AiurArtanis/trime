@@ -4,6 +4,7 @@ package com.osfans.trime.ime.broadcast
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import com.osfans.trime.data.theme.Theme
+import com.osfans.trime.data.theme.ThemeTestSupport
 import com.osfans.trime.data.theme.model.GeneralStyle
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -12,11 +13,11 @@ import org.kodein.di.bindInstance
 
 private class EnterDisplayFixture(mode: Int = EnterKeyDisplayDelegate.Mode.ACTION_LABEL_PREFERRED.ordinal) {
     private val broadcaster = InputBroadcaster()
-    private val theme = Theme(
+    private val theme = ThemeTestSupport.decodeBuiltinTheme("astra.trime.yaml").copy(
         name = "Enter label test",
-        style = GeneralStyle(
+        generalStyle = GeneralStyle(
             enterLabelMode = mode,
-            enterLabels = GeneralStyle.EnterLabel(
+            enterLabel = GeneralStyle.EnterLabel(
                 go = "Theme go",
                 done = "Theme done",
                 next = "Theme next",
