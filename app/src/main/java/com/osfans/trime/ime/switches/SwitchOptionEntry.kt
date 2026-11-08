@@ -18,6 +18,7 @@ sealed class SwitchOptionEntry(
         enum class Type {
             SchemaList,
             UpdateConfig,
+            UpdateRimeIce,
             Keyboard,
             ThemeList,
         }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_original">同步原版</string>
+    <string name="original_source_required">请选择原版同文输入法提供的 files 文件夹</string>
+    <string name="original_destination_required">请在内部存储根目录创建或选择 rime 文件夹并授权</string>
+    <string name="configuration_working">正在同步配置并部署，请稍候</string>
+    <string name="configuration_failed">配置更新失败：%1$s</string>
+    <string name="update_rime_ice">同步雾凇</string>
+</resources>

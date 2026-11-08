@@ -73,6 +73,8 @@ class Rime :
         )
 
     private val lock = Mutex()
+    private val maintenanceGate = MaintenanceGate()
+    private val optionsCached = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
     private val inlinePreeditMode by AppPrefs.defaultInstance().general.inlinePreeditMode
     private val showAsciiSwitchTips by AppPrefs.defaultInstance().general.asciiSwitchTips
@@ -88,47 +90,64 @@ class Rime :
         }
     }
 
-    private suspend inline fun <T> withRimeContext(crossinline block: suspend () -> T): T = withContext(dispatcher) {
-        block()
+    private suspend inline fun <T> withRimeContext(crossinline block: suspend () -> T): T = maintenanceGate.run {
+        withContext(dispatcher) { block() }
     }
 
     override suspend fun isEmpty(): Boolean = withRimeContext {
         getCurrentRimeSchema() == ".default" // 無方案
     }
 
-    override suspend fun deploy() = lock.withLock {
-        UserDataManager.sync()
-        val deployFinished = CompletableDeferred<Boolean>()
-        val deployHandler: (RimeMessage<*>) -> Unit = { message ->
-            if (message is RimeMessage.DeployMessage) {
-                when (message.data) {
-                    RimeMessage.DeployMessage.State.Start -> Unit
+    override suspend fun deploy() = deployConfiguration(true, {}, {}, {})
 
-                    RimeMessage.DeployMessage.State.Success -> {
-                        deployFinished.complete(true)
-                    }
+    override suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = deployConfiguration(false, install, rollback, prepare)
 
-                    RimeMessage.DeployMessage.State.Failure -> {
-                        deployFinished.complete(false)
+    private suspend fun deployConfiguration(sync: Boolean, install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = lock.withLock {
+        maintenanceGate.run {
+            check(!com.osfans.trime.TrimeApplication.getInstance().isDirectBootMode) { "Unlock the device before changing configuration" }
+            val finished = CompletableDeferred<Boolean>()
+            val handler: (RimeMessage<*>) -> Unit = { message ->
+                if (message is RimeMessage.DeployMessage) {
+                    when (message.data) {
+                        RimeMessage.DeployMessage.State.Success -> finished.complete(true)
+                        RimeMessage.DeployMessage.State.Failure -> finished.complete(false)
+                        else -> Unit
                     }
                 }
             }
-        }
-        registerRimeMessageHandler(deployHandler)
-        try {
-            withRimeContext {
-                exitRime()
-                startRime(true)
-            }
-            val success =
+            try {
+                MaintenanceDiagnostics.record("deploy.prepare")
+                withContext(dispatcher) { exitRime() }
+                if (sync) check(UserDataManager.sync()) { "User data sync failed" }
                 withContext(Dispatchers.IO) {
-                    withTimeout(5.minutes) {
-                        deployFinished.await()
+                    prepare()
+                    install()
+                }
+                registerRimeMessageHandler(handler)
+                withContext(dispatcher) { startRime(true) }
+                check(withTimeout(5.minutes) { finished.await() }) { "Rime deploy failed" }
+                withContext(dispatcher) { emitResponse() }
+                MaintenanceDiagnostics.record("deploy.completed")
+            } catch (e: Exception) {
+                MaintenanceDiagnostics.record("deploy.recovery", e.javaClass.simpleName)
+                withContext(kotlinx.coroutines.NonCancellable) {
+                    withContext(dispatcher) { exitRime() }
+                    try {
+                        withContext(Dispatchers.IO) { rollback() }
+                    } catch (recovery: Exception) {
+                        e.addSuppressed(recovery)
+                    } finally {
+                        try {
+                            withContext(dispatcher) { startRime(false) }
+                        } catch (restart: Exception) {
+                            e.addSuppressed(restart)
+                        }
                     }
                 }
-            check(success) { "Rime deploy failed" }
-        } finally {
-            unregisterRimeMessageHandler(deployHandler)
+                throw e
+            } finally {
+                unregisterRimeMessageHandler(handler)
+            }
         }
     }
 
@@ -137,40 +156,37 @@ class Rime :
         startRime(false)
     }
 
-    override suspend fun syncUserData(): Boolean = lock.withLock {
-        UserDataManager.sync()
-        // RimeSyncUserData schedules maintenance asynchronously and returns once the
-        // worker is started. Wait for DeployMessage so callers (e.g. export) only
-        // proceed after sync/<installation_id>/ has been written.
-        val syncFinished = CompletableDeferred<Boolean>()
-        val syncHandler: (RimeMessage<*>) -> Unit = { message ->
-            if (message is RimeMessage.DeployMessage) {
-                when (message.data) {
-                    RimeMessage.DeployMessage.State.Success -> syncFinished.complete(true)
-                    RimeMessage.DeployMessage.State.Failure -> syncFinished.complete(false)
-                    else -> {}
-                }
-            }
+    // Never mirror a live native user database. Keep the upstream two-way sync engine.
+    private suspend fun syncStopped(): Boolean {
+        withContext(dispatcher) { exitRime() }
+        return try {
+            UserDataManager.sync()
+        } finally {
+            withContext(kotlinx.coroutines.NonCancellable + dispatcher) { startRime(false) }
         }
-        registerRimeMessageHandler(syncHandler)
-        val syncOk =
-            try {
-                val started = withRimeContext { syncRimeUserData() }
-                if (!started) {
-                    false
-                } else {
-                    withContext(Dispatchers.IO) {
-                        withTimeout(5.minutes) {
-                            syncFinished.await()
-                        }
+    }
+
+    override suspend fun syncUserData(): Boolean = lock.withLock {
+        maintenanceGate.run {
+            if (!syncStopped()) return@run false
+            val finished = CompletableDeferred<Boolean>()
+            val handler: (RimeMessage<*>) -> Unit = { message ->
+                if (message is RimeMessage.DeployMessage) {
+                    when (message.data) {
+                        RimeMessage.DeployMessage.State.Success -> finished.complete(true)
+                        RimeMessage.DeployMessage.State.Failure -> finished.complete(false)
+                        else -> Unit
                     }
                 }
-            } finally {
-                unregisterRimeMessageHandler(syncHandler)
             }
-        // Mirror the local user data dir back to the external tree, so the
-        // userdb dumps written by the maintenance above are pushed out.
-        return syncOk && UserDataManager.sync()
+            registerRimeMessageHandler(handler)
+            try {
+                val started = withContext(dispatcher) { syncRimeUserData() }
+                started && withTimeout(5.minutes) { finished.await() } && syncStopped()
+            } finally {
+                unregisterRimeMessageHandler(handler)
+            }
+        }
     }
 
     override suspend fun processKey(
@@ -257,8 +273,19 @@ class Rime :
         setRimeOption(option, value)
     }
 
-    override suspend fun getRuntimeOption(option: String): Boolean = withRimeContext {
-        getRimeOption(option)
+    override suspend fun getRuntimeOption(option: String): Boolean {
+        val cached = optionsCached[option] ?: if (option == "ascii_mode") statusCached.isAsciiMode else false
+        if (!isReady) return cached
+        return maintenanceGate.tryRun(cached) {
+            withContext(dispatcher) { getRimeOption(option).also { optionsCached[option] = it } }
+        }
+    }
+
+    override suspend fun toggleRuntimeOption(option: String) = withRimeContext {
+        val target = !getRimeOption(option)
+        setRimeOption(option, target)
+        optionsCached[option] = target
+        emitResponse()
     }
 
     override suspend fun setNullInputType(value: Boolean) = withRimeContext {
@@ -428,8 +455,10 @@ class Rime :
         asciiSwitchTipsJob?.cancel()
         asciiSwitchTipsJob = lifecycleScope.launch {
             delay(1000L)
-            val ctx = getRimeContext()
-            handleRimeMessage(6, arrayOf(ctx.composition))
+            withRimeContext {
+                val ctx = getRimeContext()
+                handleRimeMessage(6, arrayOf(ctx.composition))
+            }
         }
     }
 
@@ -480,6 +509,11 @@ class Rime :
             )
 
         private val rimeMessageHandlers = CopyOnWriteArrayList<(RimeMessage<*>) -> Unit>()
+
+        // Maintenance notifications must survive input bursts and a late subscriber.
+        internal val deploymentEvents = kotlinx.coroutines.channels.Channel<RimeMessage.DeployMessage>(
+            kotlinx.coroutines.channels.Channel.UNLIMITED,
+        )
 
         init {
             System.loadLibrary("rime_jni")
@@ -597,7 +631,10 @@ class Rime :
             params: Array<Any>,
         ) {
             val message = RimeMessage.nativeCreate(type, params)
-            Timber.d("Handling $message")
+            if (message is RimeMessage.DeployMessage) {
+                MaintenanceDiagnostics.record("native.${message.data.name}")
+                deploymentEvents.trySend(message)
+            }
             rimeMessageHandlers.forEach { it.invoke(message) }
             messageFlow_.tryEmit(message)
         }

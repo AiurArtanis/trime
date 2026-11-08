@@ -37,7 +37,18 @@ object ColorManager {
     private var scope: ThemeScope? = null
     private val prefs = ThemeManager.prefs
 
-    private var isNightMode = false
+    private val dayNightState = DayNightSchemeState()
+    private val isNightMode get() = dayNightState.isNight
+
+    @androidx.annotation.Keep
+    private val followModeListener = com.osfans.trime.data.prefs.PreferenceDelegate.OnChangeListener<Boolean> { _, _ ->
+        dayNightState.manualSchemeId = null
+        activateScheme(notify = true)
+    }
+
+    init {
+        prefs.followSystemDayNight.registerOnChangeListener(followModeListener)
+    }
 
     val activeColorScheme: ColorScheme
         get() = requireNotNull(requireScope().activeColorScheme) { "ColorManager is not initialized" }
@@ -72,7 +83,7 @@ object ColorManager {
     }
 
     fun init(configuration: Configuration) {
-        isNightMode = configuration.isNightMode()
+        dayNightState.updateSystemMode(configuration.isNightMode())
         activateScheme(notify = false)
 
         val maxMemory = Runtime.getRuntime().maxMemory() / 1024
@@ -87,7 +98,7 @@ object ColorManager {
     }
 
     fun onSystemNightModeChange(isNight: Boolean) {
-        isNightMode = isNight
+        dayNightState.updateSystemMode(isNight)
         activateScheme(notify = true)
     }
 
@@ -99,6 +110,11 @@ object ColorManager {
      * through ThemeManager, so no color listener fires here.
      */
     fun attachTheme(theme: Theme) {
+        prefs.migrateAstraDayNight(theme.name)
+        if (theme.name == "Astra" && prefs.normalModeColor.getValue() !in theme.presetColorSchemes) {
+            prefs.normalModeColor.setValue("astra_solar")
+        }
+        dayNightState.manualSchemeId = null
         bitmapCache?.evictAll()
         scope = ThemeScope(theme)
         activateScheme(notify = false)
@@ -110,13 +126,30 @@ object ColorManager {
      * links a scheme may declare are honoured, like an automatic switch.
      */
     fun setColorScheme(schemeId: String) {
+        dayNightState.manualSchemeId = null
         prefs.normalModeColor.setValue(schemeId)
         activateScheme(notify = true)
     }
 
+    val isDarkScheme: Boolean
+        get() = androidx.core.graphics.ColorUtils.calculateLuminance(getColor("keyboard_back_color")) < 0.5
+
+    fun toggleLightDark() {
+        val theme = requireScope().theme
+        val targetId = if (theme.name == "Astra") {
+            if (isDarkScheme) "astra_solar" else "astra_luna"
+        } else {
+            activeColorScheme[if (isDarkScheme) "light_scheme" else "dark_scheme"] ?: return
+        }
+        val target = theme.presetColorSchemes[targetId] ?: return
+        dayNightState.manualSchemeId = targetId
+        prefs.normalModeColor.setValue(targetId)
+        activateScheme(target, notify = true)
+    }
+
     private fun requireScope(): ThemeScope = requireNotNull(scope) { "ColorManager is not initialized" }
 
-    private fun resolveActiveScheme(theme: Theme): ColorScheme = ColorSchemeResolver.resolve(
+    private fun resolveActiveScheme(theme: Theme): ColorScheme = theme.presetColorSchemes[dayNightState.manualSchemeId] ?: ColorSchemeResolver.resolve(
         schemes = theme.presetColorSchemes,
         selectedSchemeId = prefs.normalModeColor.getValue(),
         followSystemDayNight = prefs.followSystemDayNight.getValue(),

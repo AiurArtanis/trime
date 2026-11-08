@@ -41,6 +41,8 @@ class KeyView(
         get() = keyboardView.popup
 
     private val deletedTextBuffer = ArrayDeque<String>()
+    private var compositionHold = false
+    private var compositionCleared = false
 
     private var keyPressed = false
     override fun isPressed(): Boolean = keyPressed
@@ -81,13 +83,31 @@ class KeyView(
         hasPopup = key.popup.isNotEmpty()
 
         onPress = {
+            compositionCleared = false
+            compositionHold = theme.name == "Astra" && key.click?.let { it.code == KeyEvent.KEYCODE_DEL && it.modifier == 0 } == true &&
+                (com.osfans.trime.daemon.RimeDaemon.getFirstSessionOrNull()?.run { statusCached.isComposing } == true)
+            customLongPressTimeout = if (compositionHold) 600 else null
             if (keyboard.firstPressedKeyIndex == -1) keyboard.firstPressedKeyIndex = id
             setPressedState(true)
             key.getCode(KeyBehavior.CLICK).let { keyboardActionListener.onPress(it) }
             showPopupPreview()
         }
 
-        onRelease = { behavior, isFromLongPress ->
+        onLongPressStart = {
+            if (compositionHold) {
+                service.postRimeJob { clearComposition() }
+                compositionCleared = true
+                setPressedState(false)
+                dismissPopupPreview()
+            }
+            compositionHold
+        }
+
+        onRelease = release@{ behavior, isFromLongPress ->
+            if (compositionCleared) {
+                if (keyboard.firstPressedKeyIndex == id) keyboard.firstPressedKeyIndex = -1
+                return@release
+            }
             Timber.d("KeyView release: label=${key.getLabel()}, behavior=$behavior, fromLongPress=$isFromLongPress")
             if (isFromLongPress) {
                 if (hasPopup) {
@@ -307,11 +327,22 @@ class KeyView(
         bg.draw(canvas)
     }
 
+    private val yinYangIcon by lazy {
+        androidx.appcompat.content.res.AppCompatResources.getDrawable(context, com.osfans.trime.R.drawable.ic_phosphor_yin_yang)!!.mutate()
+    }
+
     private fun drawLabel(canvas: Canvas, label: String) {
         val textColor = key.getTextColor()
         val textSize = sp(key.keyTextSize.takeIf { it > 0 } ?: if (label.length > 1 && !label.isIconFont) keyboardView.keyLongTextSize else keyboardView.keyTextSize)
 
-        if (label.isIconFont) {
+        if (theme.name == "Astra" && label == "☯") {
+            val centerX = (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(key.keyTextOffsetX)
+            val centerY = (height - paddingTop - paddingBottom) / 2f + paddingTop + sp(key.keyTextOffsetY)
+            val half = textSize / 2
+            yinYangIcon.setTint(textColor)
+            yinYangIcon.setBounds((centerX - half).toInt(), (centerY - half).toInt(), (centerX + half).toInt(), (centerY + half).toInt())
+            yinYangIcon.draw(canvas)
+        } else if (label.isIconFont) {
             drawIcon(canvas, label, textSize.toInt(), textColor, key.keyTextOffsetX, key.keyTextOffsetY)
         } else {
             textPaint.apply {

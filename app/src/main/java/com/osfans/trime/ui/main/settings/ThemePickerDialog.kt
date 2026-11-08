@@ -42,7 +42,7 @@ object ThemePickerDialog {
                         scope.launch {
                             afterConfirm?.invoke()
                             val newItem = allThemes[which]
-                            UserDataManager.sync()
+                            com.osfans.trime.daemon.syncUserDataSafely()
                             val resolvedThemeId = ThemeManager.selectTheme(newItem.configId)
                             dialog.dismiss()
                             if (resolvedThemeId != newItem.configId) {

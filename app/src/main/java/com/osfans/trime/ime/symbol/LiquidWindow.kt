@@ -52,10 +52,9 @@ class LiquidWindow(di: DI) :
                 }
 
                 else -> {
-                    service.commitText(this.text)
-                    if (currentDataType != LiquidKeyboard.DataType.HISTORY) {
-                        symbolHistory.insert(this.text)
-                        symbolHistory.save()
+                    if (service.commitText(this.text)) {
+                        runCatching { symbolHistory.record(listOf(this.text)) }
+                            .onFailure { timber.log.Timber.w(it, "Failed to save symbol usage") }
                     }
                 }
             }

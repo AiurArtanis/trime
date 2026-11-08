@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
+        <provider android:authorities="com.osfans.trime.provider" />
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>

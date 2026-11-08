@@ -159,6 +159,10 @@ object UserDataManager {
         }
     }
 
+    fun invalidateSyncManifest() {
+        File(dataDir, SYNC_MANIFEST_NAME).delete()
+    }
+
     suspend fun sync(): Boolean = lock.withLock {
         // The external tree lives on credential-encrypted storage and is unreachable
         // before the first unlock; direct boot works from a device-protected copy instead.
@@ -180,6 +184,26 @@ object UserDataManager {
                     .collect { put(it.relativePath, it.file) }
             }
             val localMap = walkLocal(userDataDir)
+            val migrating = com.osfans.trime.data.sync.AstraDataUpgrade.needsSyncMigration(appContext)
+            if (migrating) {
+                val treeId = MessageDigest.getInstance("SHA-256").digest(externalRimeTreeUri.toByteArray())
+                    .take(8).joinToString("") { "%02x".format(it) }
+                com.osfans.trime.data.sync.UpgradeSnapshot.ensure(File(externalFilesDir, "backups/astra15-$treeId")) { snapshot ->
+                    com.osfans.trime.data.sync.UpgradeSnapshot.copyTree(userDataDir, snapshot.resolve("local"))
+                    // Snapshot completion is synchronous, while the SAF reads run in this IO context.
+                    kotlinx.coroutines.runBlocking {
+                        remoteMap.forEach { (path, remote) ->
+                            val target = com.osfans.trime.data.sync.SyncRelativePath.resolveContained(snapshot.resolve("external"), path)
+                            if (remote.isDir) target.mkdirs() else copy(remote, target)
+                        }
+                    }
+                }
+                localMap.forEach { (path, file) ->
+                    remoteMap[path]?.let { remote ->
+                        check(file.isDirectory == remote.isDir) { "Upgrade found a file/directory conflict at $path; backups retained" }
+                    }
+                }
+            }
 
             val allPaths = (localMap.keys + remoteMap.keys + oldManifest.files.keys)
                 .sortedBy { it.count { c -> c == '/' } }
@@ -188,7 +212,7 @@ object UserDataManager {
             // path was added or removed, the prospective manifest equals the stored one. Reusing
             // the recorded hashes lets us fingerprint it and compare with the stored sha256
             // before doing any I/O or rewriting the manifest.
-            if (allPaths.size == oldManifest.files.size) {
+            if (!migrating && allPaths.size == oldManifest.files.size) {
                 val preview = buildMap {
                     for (p in allPaths) {
                         val entry = oldManifest.files[p]
@@ -213,12 +237,13 @@ object UserDataManager {
                 if (removed.any { path == it || path.startsWith("$it/") }) continue
 
                 try {
-                    syncEntry(path, localMap, remoteMap, oldManifest, newMap, removed)
+                    syncEntry(path, localMap, remoteMap, if (migrating) SyncManifest("", emptyMap()) else oldManifest, newMap, removed, migrating)
                 } catch (e: IOException) {
                     throw e
                 } catch (e: SecurityException) {
                     throw e
                 } catch (e: Exception) {
+                    if (migrating) throw e
                     Timber.w(e, "Failed to sync $path")
                     oldManifest.files[path]?.let { newMap[path] = it }
                 }
@@ -228,6 +253,7 @@ object UserDataManager {
                 val newManifest = createSyncManifest(newMap)
                 it.write(serializeSyncManifest(newManifest))
             }
+            if (migrating) com.osfans.trime.data.sync.AstraDataUpgrade.finishSyncMigration(appContext)
         }
 
         Timber.d("Synced")
@@ -241,6 +267,7 @@ object UserDataManager {
         oldManifest: SyncManifest,
         newMap: MutableMap<String, SyncManifest.Entry>,
         removed: MutableSet<String>,
+        preferLocal: Boolean = false,
     ) {
         var local = localMap[path]?.takeIf { it.exists() }
         val remote = remoteMap[path]
@@ -324,6 +351,7 @@ object UserDataManager {
                 var finalLocalMtime = localMtime
                 var finalRemoteMtime = remoteMtime
                 val takeLocal = when {
+                    preferLocal && localChanged -> true
                     localChanged && !remoteChanged -> true
                     remoteChanged && !localChanged -> false
                     localChanged && remoteChanged -> localMtime > remoteMtime

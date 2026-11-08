@@ -97,7 +97,7 @@ class SchemaListFragment :
             viewModel.rime.runOnReady {
                 setEnabledSchemata(schemaIds)
                 deploy()
-                UserDataManager.sync()
+                com.osfans.trime.daemon.syncUserDataSafely()
             }
         }
     }

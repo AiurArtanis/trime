@@ -152,19 +152,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
             private fun handleSwitchCharset(action: KeyAction) {
                 val option = action.toggle.ifEmpty { return }
 
-                rime.launchOnReady { api ->
-                    service.lifecycleScope.launch {
-                        val isEnabled = api.getRuntimeOption(option)
-                        val isComposing = api.statusCached.isComposing
-                        api.setRuntimeOption(option, !isEnabled)
-                        if (option == "ascii_mode" && isComposing) {
-                            api.getRawInput().takeIf { it.isNotEmpty() }?.let {
-                                service.commitText(it)
-                                api.clearComposition()
-                            }
-                        }
-                    }
-                }
+                service.postRimeJob { toggleRuntimeOption(option) }
             }
 
             private fun handleLanguageSwitch(action: KeyAction) {
@@ -179,21 +167,46 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                 val arg = expandActiveText(action.option)
 
                 when (action.command) {
+                    "astra_color" -> com.osfans.trime.data.theme.ColorManager.toggleLightDark()
+
+                    "astra_symbol" -> service.postRimeJob {
+                        val value = com.osfans.trime.data.theme.AstraThemeActions.symbol(action.option, statusCached.isAsciiMode)
+                        if (value.isNotEmpty()) {
+                            commitComposition()
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { service.commitText(value) }
+                        }
+                    }
+
                     "liquid_keyboard" -> handleLiquidKeyboard(arg)
+
                     "menu_keyboard" -> windowManager.attachWindow(SwitchOptionWindow(di))
+
                     "clipboard_window" -> handleClipboardWindow(arg)
+
                     "set_color_scheme" -> handleColorScheme(arg)
+
                     "set_theme" -> handleTheme(arg)
+
                     "broadcast" -> service.sendBroadcast(Intent(arg))
+
                     "clipboard" -> handleClipboard()
+
                     "commit" -> service.commitText(arg)
+
                     "date" -> service.commitText(customFormatDateTime(arg))
+
                     "run" -> handleRunCommand(arg)
+
                     "apply" -> handleApplyCommand(arg)
+
                     "share_text" -> service.shareText()
+
                     "select_candidate" -> handleSelectCandidate(arg)
+
                     "switch_hide_key_symbol" -> switchHideKeySymbol()
+
                     "switch_hide_key_hint" -> switchHideKeyHint()
+
                     else -> handleIntentAction(action.command, arg)
                 }
             }

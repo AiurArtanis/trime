@@ -46,8 +46,9 @@ internal object LegacyClipMigrator {
         if (!legacyClipboard.exists() && !legacyCollection.exists()) return
 
         // A failed read keeps its file for the next launch; only successful ones are retired.
-        val clips = read(legacyClipboard)
-        val favorites = read(legacyCollection)
+        val migrationPrefs = context.getSharedPreferences("astra_clip_migration", Context.MODE_PRIVATE)
+        val clips = if (migrationPrefs.getBoolean(LEGACY_CLIPBOARD, false)) null else read(legacyClipboard)
+        val favorites = if (migrationPrefs.getBoolean(LEGACY_COLLECTION, false)) null else read(legacyCollection)
 
         if (clips.orEmpty().isNotEmpty() || favorites.orEmpty().isNotEmpty()) {
             database.withTransaction {
@@ -79,8 +80,14 @@ internal object LegacyClipMigrator {
             clips.orEmpty().size,
             favorites.orEmpty().size,
         )
-        if (clips != null) retire(legacyClipboard)
-        if (favorites != null) retire(legacyCollection)
+        if (clips != null) {
+            check(migrationPrefs.edit().putBoolean(LEGACY_CLIPBOARD, true).commit())
+            retire(legacyClipboard)
+        }
+        if (favorites != null) {
+            check(migrationPrefs.edit().putBoolean(LEGACY_COLLECTION, true).commit())
+            retire(legacyCollection)
+        }
     }
 
     /** Returns null when the file exists but cannot be read. */

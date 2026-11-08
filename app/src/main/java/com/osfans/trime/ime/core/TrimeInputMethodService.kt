@@ -92,6 +92,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
      * because the view did not exist yet. Replayed once the deferred view is built.
      */
     private var pendingEditorInfo: EditorInfo? = null
+    private val committedSymbolHistory = com.osfans.trime.data.SymbolHistory(180)
     private val navBarManager = NavigationBarManager()
     private val inputDeviceManager = InputDeviceManager { useVirtualKeyboard, useCandidatesView ->
         postRimeJob {
@@ -234,7 +235,13 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         when (it) {
             is RimeMessage.CommitTextMessage -> {
                 if (!it.data.text.isNullOrEmpty()) {
-                    commitText(it.data.text)
+                    if (commitText(it.data.text)) {
+                        val symbols = com.osfans.trime.data.CommittedSymbols.extract(it.data.text)
+                        if (symbols.isNotEmpty()) {
+                            runCatching { committedSymbolHistory.record(symbols) }
+                                .onFailure { Timber.w(it, "Failed to save committed symbol history") }
+                        }
+                    }
                 }
             }
 
@@ -402,6 +409,9 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
      * https://github.com/fcitx5-android/fcitx5-android/blob/fe3a618c8fd18842305d2f8ec2880fcc67ec1679/app/src/main/java/org/fcitx/fcitx5/android/input/FcitxInputMethodService.kt#L523-#L547
      */
     override fun onConfigurationChanged(newConfig: Configuration) {
+        ColorManager.onSystemNightModeChange(
+            newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES,
+        )
         postRimeJob { clearComposition() }
         val keyboardUiModeMask = ActivityInfo.CONFIG_KEYBOARD or
             ActivityInfo.CONFIG_KEYBOARD_HIDDEN or
@@ -613,6 +623,9 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         restarting: Boolean,
     ) {
         Timber.d("onStartInputView: restarting=$restarting")
+        ColorManager.onSystemNightModeChange(
+            resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES,
+        )
         // A previous startup may have been refused before the storage became reachable
         // (for example right after a reboot); this is the point where trying again is
         // both cheap and most likely to succeed.
@@ -662,11 +675,11 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         InputFeedbackManager.finishInput()
     }
 
-    fun commitText(text: String) {
-        val ic = currentInputConnection ?: return
+    fun commitText(text: String): Boolean {
+        val ic = currentInputConnection ?: return false
 
         // when composing text equals commit content, finish composing text as-is
-        if (composingText.isNotEmpty() && composingText == text) {
+        val committed = if (composingText.isNotEmpty() && composingText == text) {
             ic.finishComposingText()
         } else {
             ic.commitText(text, 1)
@@ -674,6 +687,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         lastCommittedText = text
         composingText = ""
         InputFeedbackManager.textCommitSpeak(text)
+        return committed
     }
 
     /**

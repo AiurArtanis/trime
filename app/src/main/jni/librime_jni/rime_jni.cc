@@ -47,6 +47,8 @@ class Rime {
     trime_traits.shared_data_dir = sharedDir;
     trime_traits.user_data_dir = userDir;
     trime_traits.log_dir = "";  // set empty log_dir to log to logcat only
+    // Per-entry debug logs make large dictionary deployment needlessly expensive.
+    trime_traits.min_log_level = 1;  // Keep warnings and errors.
     trime_traits.app_name = "rime.trime";
     trime_traits.distribution_name = "Trime";
     trime_traits.distribution_code_name = "trime";
@@ -55,7 +57,13 @@ class Rime {
     rime->setup(&trime_traits);
     rime->initialize(&trime_traits);
     rime->set_notification_handler(notificationHandler, GlobalRef->jvm);
-    rime->start_maintenance(fullCheck);
+    const bool started = rime->start_maintenance(fullCheck);
+    // A notification is sent before the worker actually exits. Do not expose
+    // sessions or allow configuration replacement until all native work ends.
+    rime->join_maintenance_thread();
+    if (fullCheck && !started) {
+      notificationHandler(GlobalRef->jvm, 0, "deploy", "failure");
+    }
   }
 
   bool deploySchema(std::string_view schemaFile) {
@@ -205,7 +213,9 @@ class Rime {
 
   bool sync() {
     session_.reset();
-    return rime->sync_user_data();
+    const bool started = rime->sync_user_data();
+    rime->join_maintenance_thread();
+    return started;
   }
 
  private:

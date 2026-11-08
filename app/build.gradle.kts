@@ -68,9 +68,9 @@ android {
             resValue("string", "trime_app_name", "@string/app_name_release")
         }
         debug {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".debug.fresh"
 
-            resValue("string", "trime_app_name", "@string/app_name_debug")
+            resValue("string", "trime_app_name", "同文输入法(Astra)")
         }
         all {
             // remove META-INF/version-control-info.textproto
@@ -128,6 +128,7 @@ ksp {
 }
 
 dependencies {
+    implementation("org.yaml:snakeyaml:2.6") // Legacy configuration import only.
     ksp(project(":codegen"))
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization.json)

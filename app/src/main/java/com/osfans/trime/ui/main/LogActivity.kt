@@ -127,4 +127,24 @@ class LogActivity : AppCompatActivity() {
             }
         }
     }
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menu.add("导出维护诊断（不含输入内容）").setOnMenuItemClickListener {
+            lifecycleScope.launch {
+                runCatching {
+                    val file = storageAccess.createFile(
+                        filename = "astra-maintenance-${iso8601UTCDateTime()}.txt",
+                        mimeType = "text/plain",
+                    ) ?: return@launch
+                    StorageAccess.writeFile(file.uri) { output ->
+                        output.bufferedWriter().use { writer ->
+                            writer.write(DeviceInfo.get(this@LogActivity))
+                            writer.write(com.osfans.trime.core.MaintenanceDiagnostics.snapshot())
+                        }
+                    }
+                }.let { toast(it) }
+            }
+            true
+        }
+        return super.onCreateOptionsMenu(menu)
+    }
 }

@@ -55,6 +55,8 @@ open class GestureFrame(context: Context) : FrameLayout(context) {
     var onSlide: ((delta: Int, x: Float, y: Float) -> Unit)? = null
 
     var onPress: (() -> Unit)? = null
+    var onLongPressStart: (() -> Boolean)? = null
+    var customLongPressTimeout: Int? = null
     var onRelease: ((behavior: KeyBehavior, longPress: Boolean) -> Unit)? = null
     var onCancel: (() -> Unit)? = null
     var onMove: ((x: Float, y: Float, longPress: Boolean) -> Unit)? = null
@@ -102,7 +104,7 @@ open class GestureFrame(context: Context) : FrameLayout(context) {
                 if (vibrateOnKeyPress) InputFeedbackManager.keyPressVibrate(this)
                 onPress?.invoke()
 
-                if (hasLongPress || isRepeatable || hasPopup) {
+                if (hasLongPress || isRepeatable || hasPopup || customLongPressTimeout != null) {
                     startLongPressJob(currentTouchId)
                 }
 
@@ -222,12 +224,13 @@ open class GestureFrame(context: Context) : FrameLayout(context) {
 
     private fun startLongPressJob(currentTouchId: Int) {
         longPressJob = lifecycleScope.launch {
-            delay(longPressTimeout.toLong())
+            delay((customLongPressTimeout ?: longPressTimeout).toLong())
             if (touchId != currentTouchId) return@launch
             if (swipeTriggered || slideActivated) return@launch
             isLongPressed = true
 
             if (vibrateOnKeyPress) InputFeedbackManager.keyPressVibrate(this@GestureFrame, true)
+            if (onLongPressStart?.invoke() == true) return@launch
 
             if (isRepeatable) {
                 startRepeatJob()
