@@ -33,6 +33,6 @@
 
 使用仓库 wrapper，在 `E:/trime-build-env/trime-env.ps1` 环境下执行 `spotlessApply :app:assembleDebug :app:testDebugUnitTest :app:lintDebug spotlessCheck`，`BUILD_ABI=arm64-v8a`。
 
-测试覆盖上游主题解析/诊断、Astra 布局和日夜状态、符号历史、配置事务回滚、快照完整性及维护互斥。最终结果见交接顶部；日志保留在 `E:/trime-build-env/astra-15-release-validation.log`。本地构建和单元测试不能代替三星实机上的覆盖安装、SAF 授权和真实旧数据库迁移验收。
+测试覆盖上游主题解析/诊断、Astra 布局和日夜状态、符号历史、配置事务回滚、快照完整性及维护互斥。最终结果见交接顶部；日志保留在 `E:/trime-build-env/astra-15-merged-validation.log`。本地构建和单元测试不能代替三星实机上的覆盖安装、SAF 授权和真实旧数据库迁移验收。
 
 NAS 交付名 `trime-astra-15-arm64-v8a-debug.apk` 及 `.sha256`。每周自动化 `astra` 已改为本策略，每周六北京时间 10:00 执行；构建结束使用仓库 wrapper 正常停止空闲守护进程，保留缓存与产物。
