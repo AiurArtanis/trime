@@ -36,3 +36,12 @@
 测试覆盖上游主题解析/诊断、Astra 布局和日夜状态、符号历史、配置事务回滚、快照完整性及维护互斥。最终结果见交接顶部；日志保留在 `E:/trime-build-env/astra-15-merged-validation.log`。本地构建和单元测试不能代替三星实机上的覆盖安装、SAF 授权和真实旧数据库迁移验收。
 
 NAS 交付名 `trime-astra-15-arm64-v8a-debug.apk` 及 `.sha256`。每周自动化 `astra` 已改为本策略，每周六北京时间 10:00 执行；构建结束使用仓库 wrapper 正常停止空闲守护进程，保留缓存与产物。
+
+### 最终交付凭据
+
+- 迁移实现 `1b0eedec`；保留双侧历史的合并 `d7960826`；测试与打包源码 `5cec704c`，已推送 `origin/develop`。后续交付凭据提交仅更新文档。
+- 合并后完整验证：389 tests，0 failures/errors/skipped；spotlessCheck 通过；lint 0 errors / 67 warnings。
+- 安装包 16,555,778 bytes，仅 `arm64-v8a`；包名 `com.osfans.trime.debug.fresh`，versionCode `20270101`，versionName `3.3.14`。
+- 本地与 NAS SHA256 均为 `a59bbff7574968c67f455fd49fd4cb8f6a2a9639113f0d9b9cbcaf713ad3eab0`。
+- 签名证书 SHA256 与 astra-14 一致：`bca2da32430f40ac2bb99371570306379c26d87cffec82b87041764b5a2bf9da`。
+- 最终打包日志 `E:/trime-build-env/astra-15-package.log`。打包后确认 Gradle 9.8.2 IDLE，且没有其他 Java 构建客户端、CMake/Ninja 进程；执行 wrapper `--stop` 后，Gradle PID 56380 和 Kotlin PID 247476、22420 均已退出，停止前合计工作集约 6085 MiB。未删除缓存和产物。
