@@ -136,6 +136,13 @@ class TrimeApplication : Application() {
                 Timber.d("Last pid is $lastPid. Set it to current pid: $currentPid")
                 setValue(currentPid)
             }
+            // Restore the retired v14 files before Room opens them. Never overwrite existing data.
+            runCatching {
+                com.osfans.trime.data.db.AstraRecovery.restore(
+                    getDatabasePath("clipboard.db").parentFile!!,
+                    filesDir,
+                )
+            }.onFailure { Timber.e(it, "Astra recovery could not restore retired databases") }
             ClipboardHelper.init(applicationContext)
             CollectionHelper.init(applicationContext)
             registerBroadcastReceiver()

@@ -1,5 +1,23 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-11-11 紧急恢复：astra-15 启动闪退
+
+- 用户实机反馈 astra-15 设置应用和键盘均闪退。此前构建/单元测试通过不等于可用；astra-15 撤回推荐，NAS 增加禁止安装说明。尚无设备崩溃日志，不能声称已确认根因。
+- 每周自动化 `astra` 已暂停，避免继续自动交付。待用户确认恢复和启动回归通过后再恢复；保留完整上游迁移的长期目标，但不能直接重新发布 astra-15。
+- 紧急恢复包 astra-16 基于 astra-14 `b03799b1` 完整运行代码，仅提高 versionCode 至 `20270102`（大于 astra-15 的 `20270101`）并增加旧剪贴板/收藏恢复。包名、签名不变，可以按升级覆盖安装，禁止卸载或清除数据。
+- 数据库恢复只复制缺失的旧 `clipboard.db`/`collection.db`，来源优先 `.legacy`，其次 astra-15 完整快照。保留 `clip.db`、原始 `.legacy`、设置、词库和常用记录；不覆盖已有旧数据库。新库独有记录仍保存在新库中，尚不自动反向合并。
+- astra-16 恢复期间使用 astra-14 的 Gradle 9.5.1 / NDK 28 环境（加载环境后 `gradle.bat`），不是下方 astra-15 的新版 wrapper。结束后使用同版本 `gradle.bat --status/--stop` 收尾。
+
+## 2026-11-09 astra-15：完整跟进上游
+
+- 维护策略改为“完整最新上游 + Astra 扩展”，替代下方历史记录的选择性合入/暂缓策略。`src` 已同步推送至 `a6307961`；个人主线仍为 `develop`。
+- 本轮从上游 `a6307961` 创建迁移分支，保留最新主题 DSL/诊断、StorageAccess 双向同步、统一剪贴板数据库、Direct Boot、Shift 和新版工具链；Astra 功能适配新接口，标准主题资源保持上游。详见 [迁移与数据兼容说明](astra-15-upstream-migration.md)。
+- 旧主线备份 `archive/astra14-before-upstream-migration`（`b03799b1`）。升级前自动快照旧设置/数据库/常用记录；首次外部同步备份两端并以现有本地内容建立基线。保持包名及签名，覆盖安装，不卸载旧版。
+- ARM64 构建、389 项测试（0 失败/错误/跳过）、spotlessCheck、lint（0 errors / 67 warnings）通过。版本号从 `20261101` 升至 `20270101`，签名与 astra-14 相同；未进行三星实机覆盖安装或 SAF/数据库迁移验收。
+- 安装包交付编号 astra-15，下一编号 astra-16；固定目录 `\\192.168.1.171\codex\trime-dev\trime-debug`，APK 和 SHA256 不覆盖旧版。
+- 每周自动化 `astra` 已改为完整上游迁移策略，仍为每周六北京时间 10:00。构建必须使用仓库 `./gradlew.bat`（9.8.2），不使用环境 PATH 中旧版 `gradle.bat`；完成后按下方流程停止空闲守护进程。
+- 上游已移除的旧 OpenCC 子模块目录归档至 `E:/trime-build-env/archives/OpenCC-pre-astra15`；新版使用 librime 内置 OpenCC，未删除旧源码或构建缓存。
+
 ## 每轮构建必须执行的资源收尾
 
 构建、测试、打包全部结束后（包括失败），执行 [构建资源收尾流程](astra-build-cleanup.md)：确认同一环境无其他编译任务后，正常停止不再需要的 Gradle/Kotlin 守护进程并核实退出。保留缓存和产物，不批量终止 Java。每周自动化 `astra` 已纳入此步骤。

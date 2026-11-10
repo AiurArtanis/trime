@@ -3,17 +3,17 @@
 适用于手动开发与每周 Astra 自动化，每轮构建、测试和最终打包全部结束后执行；失败路径也必须进入收尾。多次连续构建之间可复用守护进程，不要在尚有后续编译时提前停止。
 
 1. 先记录本轮使用的环境、进程 PID、命令行、内存和构建会话状态。检查同一 `E:\trime-build-env`、Gradle 用户目录及 Kotlin 编译环境是否有其他会话正在构建，包括等待或即将启动的任务；有并行任务或无法确认时，暂不停止共享守护进程并说明原因。CPU 空闲不是构建已完成的充分证据。
-2. 在已加载环境的 PowerShell 中检查 Gradle 状态，确认相关守护进程为 IDLE，且本轮构建进程已退出：
+2. 在仓库根目录、已加载环境的 PowerShell 中，使用仓库 wrapper（astra-15 起为 Gradle 9.8.2，不使用 PATH 内旧版 Gradle 9.5.1）检查 Gradle 状态，确认相关守护进程为 IDLE，且本轮构建进程已退出：
 
    ```powershell
    . E:/trime-build-env/trime-env.ps1
-   gradle.bat --status
+   ./gradlew.bat --status
    ```
 
 3. 确认没有其他任务使用该环境后，正常停止对应版本的 Gradle 守护进程：
 
    ```powershell
-   gradle.bat --stop
+   ./gradlew.bat --stop
    ```
 
    该命令可能停止相同版本/用户目录的多个守护进程，所以必须先确认共享环境空闲。
