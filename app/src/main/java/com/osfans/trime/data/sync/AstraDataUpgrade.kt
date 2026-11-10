@@ -18,12 +18,15 @@ object AstraDataUpgrade {
             context.filesDir.resolve("symbol_history"),
             context.getDatabasePath("clipboard.db"),
             context.getDatabasePath("collection.db"),
+            context.getDatabasePath("clip.db"),
         )
         if (!prefs.contains(LEGACY)) {
             check(prefs.edit().putBoolean(LEGACY, legacyFiles.any { it.exists() } || prefs.contains("astra_day_night_v2")).commit())
         }
         if (!prefs.getBoolean(LEGACY, false)) return
-        UpgradeSnapshot.ensure(context.filesDir.resolve("astra-upgrade-15/private")) { backup ->
+        // A fresh snapshot is necessary after returning from the v16 recovery build.
+        // Keep the original v15 snapshot untouched.
+        UpgradeSnapshot.ensure(context.filesDir.resolve("astra-upgrade-17/private")) { backup ->
             legacyFiles.forEach { file ->
                 listOf("", "-wal", "-shm").forEach { suffix ->
                     UpgradeSnapshot.copyTree(File(file.path + suffix), backup.resolve(file.name + suffix))

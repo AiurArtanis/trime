@@ -46,27 +46,29 @@ internal object LegacyClipMigrator {
         if (!legacyClipboard.exists() && !legacyCollection.exists()) return
 
         // A failed read keeps its file for the next launch; only successful ones are retired.
-        val migrationPrefs = context.getSharedPreferences("astra_clip_migration", Context.MODE_PRIVATE)
-        val clips = if (migrationPrefs.getBoolean(LEGACY_CLIPBOARD, false)) null else read(legacyClipboard)
-        val favorites = if (migrationPrefs.getBoolean(LEGACY_COLLECTION, false)) null else read(legacyCollection)
+        // v16 can restore and modify these files after v15 marked them migrated.
+        // Read existing sources again and merge by content, never by conflicting row IDs.
+        val clips = read(legacyClipboard)
+        val favorites = read(legacyCollection)
 
         if (clips.orEmpty().isNotEmpty() || favorites.orEmpty().isNotEmpty()) {
             database.withTransaction {
                 clips.orEmpty().forEach { row ->
+                    val type = if (row.html) "text/html" else ClipDescription.MIMETYPE_TEXT_PLAIN
+                    if (database.clipboardDao().containsLegacyRow(row.text, row.pinned, row.timestamp, type)) return@forEach
                     database.clipboardDao().insert(
                         ClipboardEntity(
-                            id = row.id,
                             text = row.text,
                             pinned = row.pinned,
                             timestamp = row.timestamp,
-                            type = if (row.html) "text/html" else ClipDescription.MIMETYPE_TEXT_PLAIN,
+                            type = type,
                         ),
                     )
                 }
                 favorites.orEmpty().forEach { row ->
+                    if (database.favoriteDao().containsLegacyRow(row.text, row.timestamp)) return@forEach
                     database.favoriteDao().insert(
                         FavoriteEntity(
-                            id = row.id,
                             text = row.text,
                             timestamp = row.timestamp,
                         ),
@@ -81,11 +83,9 @@ internal object LegacyClipMigrator {
             favorites.orEmpty().size,
         )
         if (clips != null) {
-            check(migrationPrefs.edit().putBoolean(LEGACY_CLIPBOARD, true).commit())
             retire(legacyClipboard)
         }
         if (favorites != null) {
-            check(migrationPrefs.edit().putBoolean(LEGACY_COLLECTION, true).commit())
             retire(legacyCollection)
         }
     }
@@ -131,9 +131,10 @@ internal object LegacyClipMigrator {
         .use { it.moveToFirst() }
 
     private fun retire(file: File) {
+        val suffixForThisRun = "$LEGACY_SUFFIX-astra17-${java.util.UUID.randomUUID()}"
         SIDECARS.forEach { suffix ->
             val target = File(file.path + suffix)
-            if (target.exists() && !target.renameTo(File(target.path + LEGACY_SUFFIX))) {
+            if (target.exists() && !target.renameTo(File(target.path + suffixForThisRun))) {
                 Timber.w("Failed to retire ${target.name}")
             }
         }
