@@ -22,6 +22,8 @@
 
 已通过 7 项构建逻辑测试、389 项应用测试（均无失败/错误/跳过）、ARM64 构建、spotlessCheck 和 lint（0 errors / 65 warnings）。最终 APK 的 55 个清单文件全部通过存在性和 SHA256 检查。将 NAS 原始 astra-15 APK 输入同一个 Gradle 校验任务时，任务按预期失败，准确列出 JPVariants.txt 和 JPVariantsRev.txt 缺失。负向验证日志 `E:/trime-build-env/astra17-bad-apk-rejected.log`；完整日志 `astra-17-candidate-final.log`，构建逻辑日志 `astra-17-buildlogic-final.log`。
 
+候选代码 `8c4152c4` 已推送 `origin/fix/astra17-upstream-assets`；`develop` 仍为恢复版 `fb514466`，未合并本候选。安装包为 `\\192.168.1.171\codex\trime-dev\trime-debug\candidates\trime-astra-17-upstream-candidate-arm64-v8a-debug.apk`，旁有 `.sha256` 和待实机调试说明。包名与签名和 astra-16 一致，versionCode `20270103`；本地与 NAS SHA256 一致：`76c674ba40a8578eb1b96c0eeeeb159e136794a1981504a7998e4a4e0d882c85`。打包日志 `E:/trime-build-env/astra-17-candidate-package.log`。
+
 ## 下次手机联调
 
 - 先确认当前设备、恢复版 versionCode 与可用状态，备份现有应用数据库、设置、常用记录和词库，不输出用户内容。
