@@ -18,3 +18,11 @@
 - SHA256：`12ce24631cf7f86c1ccd380fec46e5b8d2e84b381ccbe40a8e9074b0b2ad6428`。
 - 签名与 astra-15 一致；`20270102 > 20270101`，可走正常升级安装。versionName 保留 `3.3.13` 表示恢复运行代码，不影响 Android 的 versionCode 升级判断。
 - 用户暂时无法连接手机；未取得崩溃堆栈，未验证真实覆盖安装。等待用户确认恢复效果，不能将这些本地检查记为已解决实机启动故障。
+
+## 后续无线 ADB 实机核查（2026-11-11）
+
+用户随后开启无线调试，成功连接三星 SM-S9360。设备已安装 versionCode 20270102；重启应用后设置页和测试输入键盘均正常显示，观察到实际输入的拼音及中文候选，进程持续存活且该进程的 crash buffer 无新增记录。此次安装由用户完成，并非自动安装测试；尚未验证全部功能和完整数据迁移。
+
+已取得故障版本的 Java 崩溃堆栈：`FileNotFoundException: shared/opencc/JPVariants.txt`，发生于 `core.data.DataManager.copyFile/sync -> Rime.startRime`。直接检查 NAS 原始 APK：astra-15 的 checksums.json 声明 57 个文件，其中 `shared/opencc/JPVariants.txt` 和 `shared/opencc/JPVariantsRev.txt` 不存在于 APK，其余哈希匹配；astra-16 的 57 个声明文件全部存在且 SHA256 一致。
+
+因此，已确认的直接原因是资源清单与 APK 内容不一致，并非已证明数据库迁移或主题布局引发崩溃。上游 DataChecksumsTask 在非增量执行时仍复用旧文件映射，是需要修复并复现验证的缓存失效路径；以后交付必须检查最终 APK 中清单声明的每个文件及其哈希，不能只检查编译、签名和 APK 整体哈希。暂不将 astra-15 重新安装到用户手机，自动化继续暂停。
