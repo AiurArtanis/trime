@@ -26,6 +26,10 @@ interface RimeApi {
 
     suspend fun deploy()
 
+    suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit = {})
+
+    suspend fun toggleRuntimeOption(option: String)
+
     suspend fun updateConfig()
 
     suspend fun syncUserData(): Boolean

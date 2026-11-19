@@ -7,10 +7,12 @@ package com.osfans.trime.ui.setup
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.os.bundleOf
@@ -19,7 +21,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.osfans.trime.R
@@ -40,6 +44,121 @@ import splitties.systemservices.notificationManager
 
 class SetupActivity : FragmentActivity() {
     private lateinit var viewPager: ViewPager2
+    private var originalSource: Uri? = null
+    private var importProgress: AlertDialog? = null
+
+    private val originalSourcePicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            if (uri.authority != "com.osfans.trime.provider") {
+                toast(R.string.original_source_required)
+            } else {
+                originalSource = uri
+                toast(R.string.original_destination_required)
+                originalDestinationPicker.launch(
+                    android.provider.DocumentsContract.buildDocumentUri(
+                        "com.android.externalstorage.documents",
+                        "primary:rime",
+                    ),
+                )
+            }
+        }
+    }
+
+    private val originalDestinationPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        val source = originalSource
+        if (uri != null && source != null) {
+            if (uri.authority != "com.android.externalstorage.documents" ||
+                android.provider.DocumentsContract.getTreeDocumentId(uri) != "primary:rime"
+            ) {
+                toast(R.string.original_destination_required)
+            } else {
+                importOriginal(source, uri)
+            }
+        }
+    }
+
+    fun launchOriginalSync() {
+        toast(R.string.original_source_required)
+        originalSourcePicker.launch(android.provider.DocumentsContract.buildRootUri("com.osfans.trime.provider", "files"))
+    }
+
+    private fun importOriginal(source: Uri, destination: Uri) {
+        if (!originalImportRunning.compareAndSet(false, true)) return
+        val ctx = applicationContext
+        com.osfans.trime.TrimeApplication.getInstance().coroutineScope.launch {
+            val directory = java.io.File(ctx.cacheDir, "original-${java.util.UUID.randomUUID()}")
+            val snapshot = java.io.File(ctx.cacheDir, "external-${java.util.UUID.randomUUID()}")
+            val sessionName = "original-import-${java.util.UUID.randomUUID()}"
+            var sessionCreated = false
+            val mode = com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.dataStorageMode
+            val previousMode = mode.getValue()
+            var completed = false
+            try {
+                ctx.contentResolver.takePersistableUriPermission(
+                    destination,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+                withContext(Dispatchers.IO) {
+                    com.osfans.trime.data.sync.ConfigurationTransfer.readOriginal(ctx, source, directory)
+                    com.osfans.trime.data.sync.ConfigurationTransfer.mergeDestination(ctx, destination, directory)
+                    com.osfans.trime.data.sync.ImportedThemeTuning.apply(ctx, directory)
+                }
+                val external = com.osfans.trime.data.sync.ExternalConfigurationInstall(
+                    ctx,
+                    destination,
+                    directory,
+                    snapshot,
+                )
+                val install = com.osfans.trime.data.sync.ConfigurationInstall(
+                    directory,
+                    com.osfans.trime.core.data.DataManager.userDataDir,
+                    java.io.File(ctx.getExternalFilesDir(null), "backups/original-${System.currentTimeMillis()}.bak"),
+                )
+                // Bootstrap from app storage before committing the first external tree.
+                mode.setValue(com.osfans.trime.core.data.DataStorageMode.APP_STORAGE)
+                val session = com.osfans.trime.daemon.RimeDaemon.createSession(sessionName)
+                sessionCreated = true
+                run {
+                    session.runOnReady {
+                        replaceConfiguration(
+                            { install.install() },
+                            {
+                                try {
+                                    external.rollback()
+                                } finally {
+                                    install.rollback()
+                                }
+                            },
+                            {
+                                external.prepare()
+                                external.install()
+                            },
+                        )
+                    }
+                }
+                UserDataManager.persistTreeUri(destination)
+                com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.dataStorageMode
+                    .setValue(com.osfans.trime.core.data.DataStorageMode.EXTERNAL_SYNC)
+                completed = true
+                toast(R.string.done)
+                if (!isDestroyed) {
+                    refreshCurrentFragment()
+                    updateButtons()
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "Original configuration import failed")
+                android.widget.Toast.makeText(ctx, getString(R.string.configuration_failed, e.message), android.widget.Toast.LENGTH_LONG).show()
+            } finally {
+                if (!completed) mode.setValue(previousMode)
+                if (sessionCreated) com.osfans.trime.daemon.RimeDaemon.destroySession(sessionName)
+                withContext(Dispatchers.IO) {
+                    directory.deleteRecursively()
+                    snapshot.deleteRecursively()
+                }
+                originalImportRunning.value = false
+            }
+        }
+    }
 
     private lateinit var skipButton: Button
     private lateinit var prevButton: Button
@@ -52,7 +171,7 @@ class SetupActivity : FragmentActivity() {
             val picked = storageAccess.pickDirectory() ?: return@launch
             runCatching {
                 UserDataManager.persistTreeUri(picked.uri)
-                check(UserDataManager.sync())
+                check(com.osfans.trime.daemon.syncUserDataSafely())
                 refreshCurrentFragment()
                 updateButtons()
                 toast(R.string.setup__data_path_imported)
@@ -78,6 +197,7 @@ class SetupActivity : FragmentActivity() {
     }
 
     companion object {
+        private val originalImportRunning = kotlinx.coroutines.flow.MutableStateFlow(false)
         private var shown = false
         private const val CHANNEL_ID = "setup"
         private const val NOTIFY_ID = 87463
@@ -87,6 +207,22 @@ class SetupActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                originalImportRunning.collect { running ->
+                    if (running && importProgress == null) {
+                        importProgress = AlertDialog.Builder(this@SetupActivity)
+                            .setMessage(R.string.configuration_working).setCancelable(false).show()
+                    } else if (!running) {
+                        importProgress?.dismiss()
+                        importProgress = null
+                        refreshCurrentFragment()
+                        updateButtons()
+                    }
+                }
+            }
+        }
+        originalSource = savedInstanceState?.getString("original_source")?.let(Uri::parse)
         enableEdgeToEdge()
         val binding = ActivitySetupBinding.inflate(layoutInflater)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
@@ -157,6 +293,11 @@ class SetupActivity : FragmentActivity() {
         nextButton.text = getString(if (isLastPage) R.string.done else R.string.setup__next)
         nextButton.isGone = isLastPage && !allDone
         nextButton.isEnabled = modeSetupDone
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("original_source", originalSource?.toString())
+        super.onSaveInstanceState(outState)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

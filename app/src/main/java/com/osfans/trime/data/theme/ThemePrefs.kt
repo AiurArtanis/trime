@@ -64,6 +64,21 @@ class ThemePrefs(
             false,
         )
 
+    /** Restore Astra's automatic colors once after older toggles disabled following. */
+    fun migrateAstraDayNight(themeName: String) {
+        if (themeName != "Astra") return
+        sharedPreferences.edit {
+            if (!sharedPreferences.getBoolean("astra_day_night_v2", false)) {
+                putBoolean("astra_day_night_v2", true)
+                putBoolean(FOLLOW_SYSTEM_DAY_NIGHT, true)
+            }
+            if (!sharedPreferences.getBoolean("astra_upstream_pair_v1", false)) {
+                putBoolean("astra_upstream_pair_v1", true)
+                if (normalModeColor.getValue() in setOf("default", "steam")) putString(NORMAL_MODE_COLOR, "astra_solar")
+            }
+        }
+    }
+
     companion object {
         const val SELECTED_THEME = "selected_theme"
         const val NORMAL_MODE_COLOR = "normal_mode_color"

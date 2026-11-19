@@ -55,6 +55,8 @@ class SetupFragment : Fragment() {
             DataStorageMode.APP_STORAGE -> R.id.app_specific_storage_option
         }
         with(binding) {
+            syncOriginalButton.visibility = if (isStorageModePage) View.VISIBLE else View.GONE
+            syncOriginalButton.setOnClickListener { (requireActivity() as SetupActivity).launchOriginalSync() }
             storageModeOptions.visibility = if (isStorageModePage) View.VISIBLE else View.GONE
             storageModeOptions.check(checkedId)
 

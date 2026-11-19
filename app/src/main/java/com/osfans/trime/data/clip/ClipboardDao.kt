@@ -13,6 +13,9 @@ import androidx.room.Query
 
 @Dao
 interface ClipboardDao {
+    @Query("SELECT EXISTS(SELECT 1 FROM clipboard WHERE text=:text AND pinned=:pinned AND timestamp=:timestamp AND type=:type AND sensitive=0)")
+    suspend fun containsLegacyRow(text: String, pinned: Boolean, timestamp: Long, type: String): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: ClipboardEntity): Long
 

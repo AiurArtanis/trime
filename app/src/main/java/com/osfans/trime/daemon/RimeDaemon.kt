@@ -19,13 +19,9 @@ import com.osfans.trime.core.whenReady
 import com.osfans.trime.ui.main.LogActivity
 import com.osfans.trime.util.DeployNotification
 import com.osfans.trime.util.appContext
-import com.osfans.trime.util.readText
-import com.osfans.trime.util.subprocess
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import splitties.systemservices.notificationManager
 import timber.log.Timber
 import java.util.concurrent.locks.ReentrantLock
@@ -150,8 +146,9 @@ object RimeDaemon {
     init {
         DeployNotification.ensureChannel()
         TrimeApplication.getInstance().coroutineScope.launch {
-            realRime.messageFlow.collect {
-                handleRimeMessage(it)
+            for (event in Rime.deploymentEvents) {
+                runCatching { handleRimeMessage(event) }
+                    .onFailure { timber.log.Timber.e(it, "Deployment notification failed") }
             }
         }
     }
@@ -183,11 +180,18 @@ object RimeDaemon {
                 setPriority(NotificationCompat.PRIORITY_HIGH)
             }
         }
-        realRime.finalize()
-        realRime.startup()
+        val name = "restart-$id"
+        val session = createSession(name)
         TrimeApplication.getInstance().coroutineScope.launch {
-            realRime.lifecycle.whenReady {
+            try {
+                session.runOnReady {
+                    if (fullCheck) deploy() else updateConfig()
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "Rime restart failed")
+            } finally {
                 notificationManager.cancel(id)
+                destroySession(name)
             }
         }
     }
@@ -201,7 +205,6 @@ object RimeDaemon {
             when (it.data) {
                 RimeMessage.DeployMessage.State.Start -> {
                     DeployNotification.showProgress()
-                    withContext(Dispatchers.IO) { subprocess("logcat", "--clear") }
                 }
 
                 RimeMessage.DeployMessage.State.Success -> {
@@ -212,9 +215,7 @@ object RimeDaemon {
                     val intent =
                         Intent(appContext, LogActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            val log =
-                                subprocess("logcat", "-v", "brief", "-s", "rime.trime:W", "-d")
-                                    .readText()
+                            val log = com.osfans.trime.core.MaintenanceDiagnostics.snapshot()
                             putExtra(LogActivity.FROM_DEPLOY, true)
                             putExtra(LogActivity.DEPLOY_FAILURE_TRACE, log)
                         }

@@ -191,6 +191,7 @@ class TrimeApplication :
                 Timber.d("Last pid is $lastPid. Set it to current pid: $currentPid")
                 setValue(currentPid)
             }
+            com.osfans.trime.data.sync.AstraDataUpgrade.prepare(ctx)
             ClipboardHelper.init(ctx)
             FavoriteHelper.init(ctx)
             if (!isDirectBootMode) {
