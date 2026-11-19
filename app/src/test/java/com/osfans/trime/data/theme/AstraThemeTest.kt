@@ -43,12 +43,25 @@ class AstraThemeTest :
         }
         "number layout matches the four rows in the reference" {
             val clicks = astra.presetKeyboards.getValue("number").keys.map { token(it, KeyBehavior.CLICK) }
-            clicks.chunked(6) shouldBe listOf(
+            clicks.map { id -> astra.presetKeys[id]?.commit?.takeIf { it.isNotEmpty() } ?: id }.chunked(6) shouldBe listOf(
                 listOf("{}{Left}", "1", "2", "3", "+", "BackSpace"),
                 listOf("_", "4", "5", "6", "-", "Keyboard_defaulten"),
                 listOf("(){Left}", "7", "8", "9", "*", "space1"),
                 listOf("Keyboard_default", ".", "0", "=", "/", "Return"),
             )
+        }
+        "both symbol menus open the same groups without sending schema shortcuts" {
+            val liquid = astra.liquidKeyboard
+            for (id in listOf("tabs", "symbollist")) {
+                val menu = liquid.keyboards.single { it.id == id }
+                menu.type.name shouldBe "GROUP"
+                menu.keys.all { !liquid.symbolGroups[it.altText].isNullOrEmpty() } shouldBe true
+                val blocks = menu.keys.single { it.text == "方块" }.altText
+                astra.presetKeys.getValue("方块").option shouldBe blocks
+                liquid.symbolGroups.getValue(blocks).contains("█") shouldBe true
+            }
+            astra.presetKeys.getValue("方块").command shouldBe "astra_symbol_group"
+            for (digit in 0..9) astra.presetKeys.getValue("Astra_digit_$digit").commit shouldBe digit.toString()
         }
         "both text layouts expose voice input and symbol long-press actions" {
             listOf("default", "letter").forEach { layout ->

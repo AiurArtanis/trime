@@ -38,7 +38,7 @@ import timber.log.Timber
 @OptIn(InternalSerializationApi::class)
 internal object LiquidKeyboardSerializer : KSerializer<LiquidKeyboard> {
     /** The fixed keys of the section; every other key of the mapping is a keyboard id. */
-    private val fixedKeys = setOf("single_width", "key_height", "margin_x", "fixed_key_bar", "keyboards")
+    private val fixedKeys = setOf("single_width", "key_height", "margin_x", "fixed_key_bar", "keyboards", "symbol_groups")
 
     private val headerSerializer = Header.serializer()
     private val bodySerializer = Body.serializer()
@@ -73,6 +73,7 @@ internal object LiquidKeyboardSerializer : KSerializer<LiquidKeyboard> {
             marginX = header.marginX,
             fixedKeyBar = header.fixedKeyBar,
             keyboards = keyboards,
+            symbolGroups = header.symbolGroups,
         )
     }
 
@@ -86,6 +87,7 @@ internal object LiquidKeyboardSerializer : KSerializer<LiquidKeyboard> {
         val marginX: Float = 0f,
         val fixedKeyBar: LiquidKeyboard.KeyBar = LiquidKeyboard.KeyBar(),
         val keyboards: List<String> = emptyList(),
+        val symbolGroups: Map<String, List<String>> = emptyMap(),
     )
 
     /** One keyboard section; its id is the key it is stored under. */

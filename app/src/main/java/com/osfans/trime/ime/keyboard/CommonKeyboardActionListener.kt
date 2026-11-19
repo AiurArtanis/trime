@@ -177,6 +177,13 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         }
                     }
 
+                    "astra_symbol_group" -> {
+                        if (arg in theme.liquidKeyboard.symbolGroups) {
+                            handleLiquidKeyboard("更多")
+                            liquidWindow.showSymbolGroup(arg)
+                        }
+                    }
+
                     "liquid_keyboard" -> handleLiquidKeyboard(arg)
 
                     "menu_keyboard" -> windowManager.attachWindow(SwitchOptionWindow(di))

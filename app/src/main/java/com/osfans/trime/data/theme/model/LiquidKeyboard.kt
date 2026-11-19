@@ -15,6 +15,7 @@ data class LiquidKeyboard(
     val marginX: Float = 0f,
     val fixedKeyBar: KeyBar = KeyBar(),
     val keyboards: List<Keyboard> = emptyList(),
+    val symbolGroups: Map<String, List<String>> = emptyMap(),
 ) {
 
     @Serializable
@@ -47,6 +48,7 @@ data class LiquidKeyboard(
     enum class DataType {
         SINGLE,
         SYMBOL,
+        GROUP,
         TABS,
         HISTORY,
     }
