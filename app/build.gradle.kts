@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2015 - 2025 Rime community
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-@file:Suppress("UnstableApiUsage")
 
 plugins {
     id("com.osfans.trime.app-convention")
@@ -25,7 +24,7 @@ android {
         applicationId = "com.osfans.trime"
         minSdk = 26
         targetSdk = 37
-        versionCode = 20270101
+        versionCode = 20270104
         versionName = "3.3.14"
 
         multiDexEnabled = true

@@ -43,7 +43,9 @@ class LiquidWindow(di: DI) :
     private val adapter by lazy {
         LiquidAdapter(scope) {
             when (currentDataType) {
-                LiquidKeyboard.DataType.SYMBOL -> triggerSymbolInput(this.altText)
+                LiquidKeyboard.DataType.SYMBOL -> triggerSymbolInput(altText)
+
+                LiquidKeyboard.DataType.GROUP -> showSymbolGroup(altText)
 
                 LiquidKeyboard.DataType.TABS -> {
                     val realPosition = scope.theme.liquidKeyboard.getTagList()
@@ -112,6 +114,15 @@ class LiquidWindow(di: DI) :
                 submitData(data)
             }
         }
+    }
+
+    /** Browse the group in the keyboard; only a tap on an actual symbol commits text. */
+    fun showSymbolGroup(id: String): Boolean {
+        val items = scope.theme.liquidKeyboard.symbolGroups[id] ?: return false
+        currentDataType = LiquidKeyboard.DataType.SINGLE
+        submitData(items.map { LiquidKeyboard.KeyItem(it) })
+        liquidLayout.recyclerView.scrollToPosition(0)
+        return true
     }
 
     private fun submitData(data: List<LiquidKeyboard.KeyItem>) {

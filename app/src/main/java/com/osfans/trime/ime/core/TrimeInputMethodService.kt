@@ -380,6 +380,13 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         updateInputViewShown()
     }
 
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // Built keyboards are rebuildable at any time, so any memory pressure is a good
+        // moment to drop the ones that are not currently shown.
+        inputView?.trimMemory()
+    }
+
     override fun onDestroy() {
         InputFeedbackManager.destroy()
         inputView = null
@@ -1009,8 +1016,9 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         }
     }
 
-    internal fun updateComposingText(text: String) {
-        val ic = currentInputConnection ?: return
+    /** Returns false when there is no editor to write to, so a caller can retry later. */
+    internal fun updateComposingText(text: String): Boolean {
+        val ic = currentInputConnection ?: return false
         ic.beginBatchEdit()
         if (composingText.isNotEmpty() || text.isNotEmpty()) {
             if (!ic.getSelectedText(0).isNullOrEmpty()) {
@@ -1023,6 +1031,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         }
         composingText = text
         ic.endBatchEdit()
+        return true
     }
 
     fun getActiveText(type: Int): String {

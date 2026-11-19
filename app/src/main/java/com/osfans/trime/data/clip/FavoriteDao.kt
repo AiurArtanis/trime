@@ -13,6 +13,9 @@ import androidx.room.Query
 
 @Dao
 interface FavoriteDao {
+    @Query("SELECT EXISTS(SELECT 1 FROM favorite WHERE text=:text AND timestamp=:timestamp)")
+    suspend fun containsLegacyRow(text: String, timestamp: Long): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: FavoriteEntity): Long
 

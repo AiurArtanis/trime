@@ -1023,9 +1023,60 @@ liquid_keyboard:
       - clipboard_window
       - liquid_keyboard_tabs
   keyboards: [history, emoji, math, ascii, cn, symbollist, list, ids, symbol, tabs, pinyin, script_symbols, jp, grease, rusa, korea, lation, yinbiao, unit, yanwenzi, combing, emoji_full]  #tab列表
+  symbol_groups:
+    # In-keyboard pages from rime-prelude/symbols.yaml; independent of the active schema.
+    "fh": ["©", "®", "℗", "℠", "™", "℡", "℻", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☕", "☖", "☗", "⛉", "⛊", "☘", "☙", "☚", "☛", "☜", "☝", "☞", "☟", "☠", "☡", "☢", "☣", "☤", "☥", "☦", "☧", "☨", "☩", "☪", "☫", "☬", "☭", "☮", "☯", "☸", "♨", "♰", "♱", "♲", "♳", "♴", "♵", "♶", "♷", "♸", "♹", "♺", "♻", "♼", "♽", "♾", "♿", "⚆", "⚇", "⚈", "⚉", "⚐", "⚑", "⚒", "⚓", "⚔", "⚕", "⚖", "⚗", "⚘", "⚙", "⚚", "⚛", "⚜", "⚝", "⚞", "⚟", "⚠", "⚡", "⚰", "⚱", "⚲", "⚳", "⚴", "⚵", "⚶", "⚷", "⚸", "⚹", "⚺", "⚻", "⚼", "⚽", "⚾", "⚿", "⛀", "⛁", "⛂", "⛃", "⛋", "⛌", "⛍", "⛎", "⛏", "⛐", "⛑", "⛒", "⛓", "⛔", "⛕", "⛖", "⛗", "⛘", "⛙", "⛚", "⛛", "⛜", "⛝", "⛞", "⛟", "⛠", "⛡", "⛢", "⛣", "⛨", "⛩", "⛪", "⛫", "⛬", "⛭", "⛮", "⛯", "⛰", "⛱", "⛲", "⛳", "⛴", "⛵", "⛶", "⛷", "⛸", "⛹", "⛺", "⛻", "⛼", "⛽", "⛾", "⛿"]
+    "dn": ["❖", "⌘", "⌃", "⌥", "⎇", "⇧", "⇪", "␣", "⇥", "⇤", "↩", "⌅", "⌤", "⌫", "⌦", "⌧", "⎋", "⌨", "◁", "⌀", "⌖", "⌗", "⏏", "↖", "↘", "⇞", "⇟", "⌚", "⏰", "⏱", "⏲", "⏳", "⌛", "⌜", "⌝", "⌞", "⌟", "⍑", "⏩", "⏪", "⏫", "⏬", "⏭", "⏮", "⏯"]
+    "xq": ["♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟"]
+    "mj": ["🀀", "🀁", "🀂", "🀃", "🀄", "🀅", "🀆", "🀇", "🀈", "🀉", "🀊", "🀋", "🀌", "🀍", "🀎", "🀏", "🀐", "🀑", "🀒", "🀓", "🀔", "🀕", "🀖", "🀗", "🀘", "🀙", "🀚", "🀛", "🀜", "🀝", "🀞", "🀟", "🀠", "🀡", "🀢", "🀣", "🀤", "🀥", "🀦", "🀧", "🀨", "🀩", "🀪", "🀫"]
+    "sz": ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"]
+    "pk": ["♠", "♥", "♣", "♦", "♤", "♡", "♧", "♢"]
+    "tq": ["☀", "☁", "⛅", "⛈", "⛆", "☂", "☔", "☃", "⛄", "⛇"]
+    "yy": ["𝄞", "♩", "♪", "♫", "♬", "♭", "♮", "♯"]
+    "bg": ["☰", "☱", "☲", "☳", "☴", "☵", "☶", "☷"]
+    "lssg": ["䷀", "䷁", "䷂", "䷃", "䷄", "䷅", "䷆", "䷇", "䷈", "䷉", "䷊", "䷋", "䷌", "䷍", "䷎", "䷏", "䷐", "䷑", "䷒", "䷓", "䷔", "䷕", "䷖", "䷗", "䷘", "䷙", "䷚", "䷛", "䷜", "䷝", "䷞", "䷟", "䷠", "䷡", "䷢", "䷣", "䷤", "䷥", "䷦", "䷧", "䷨", "䷩", "䷪", "䷫", "䷬", "䷭", "䷮", "䷯", "䷰", "䷱", "䷲", "䷳", "䷴", "䷵", "䷶", "䷷", "䷸", "䷹", "䷺", "䷻", "䷼", "䷽", "䷾", "䷿"]
+    "tt": ["☄", "☼", "☽", "☾", "☿", "♀", "♁", "♂", "♃", "♄", "♅", "♆", "♇"]
+    "xz": ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
+    "xh": ["★", "☆", "⛤", "⛥", "⛦", "⛧", "✡", "❋", "❊", "❉", "❈", "❇", "❆", "❅", "❄", "❃", "❂", "❁", "❀", "✿", "✾", "✽", "✼", "✻", "✺", "✹", "✸", "✷", "✶", "✵", "✴", "✳", "✲", "✱", "✰", "✯", "✮", "✭", "✬", "✫", "✪", "✩", "✧", "✦", "✥", "✤", "✣", "✢"]
+    "fk": ["▀", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▉", "▊", "▋", "▌", "▍", "▎", "▏", "▐", "░", "▒", "▓", "▔", "▕", "▖", "▗", "▘", "▙", "▚", "▛", "▜", "▝", "▞", "▟"]
+    "jh": ["■", "□", "▢", "▣", "▤", "▥", "▦", "▧", "▨", "▩", "▪", "▫", "▬", "▭", "▮", "▯", "▰", "▱", "▲", "△", "▴", "▵", "▶", "▷", "▸", "▹", "►", "▻", "▼", "▽", "▾", "▿", "◀", "◁", "◂", "◃", "◄", "◅", "◆", "◇", "◈", "◉", "◊", "○", "◌", "◍", "◎", "●", "◐", "◑", "◒", "◓", "◔", "◕", "◖", "◗", "◘", "◙", "◚", "◛", "◜", "◝", "◞", "◟", "◠", "◡", "◢", "◣", "◤", "◥", "◦", "◧", "◨", "◩", "◪", "◫", "◬", "◭", "◮", "◯", "◰", "◱", "◲", "◳", "◴", "◵", "◶", "◷", "◸", "◹", "◺", "◻", "◼", "◽", "◾", "◿"]
+    "jt": ["↑", "↓", "←", "→", "↕", "↔", "↖", "↗", "↙", "↘", "↚", "↛", "↮", "↜", "↝", "↞", "↟", "↠", "↡", "↢", "↣", "↤", "↥", "↦", "↧", "↨", "↩", "↪", "↫", "↬", "↭", "↯", "↰", "↱", "↲", "↳", "↴", "↵", "↶", "↷", "↸", "↹", "↺", "↻", "↼", "↽", "↾", "↿", "⇀", "⇁", "⇂", "⇃", "⇄", "⇅", "⇆", "⇇", "⇈", "⇉", "⇊", "⇋", "⇌", "⇐", "⇍", "⇑", "⇒", "⇏", "⇓", "⇔", "⇎", "⇕", "⇖", "⇗", "⇘", "⇙", "⇚", "⇛", "⇜", "⇝", "⇞", "⇟", "⇠", "⇡", "⇢", "⇣", "⇤", "⇥", "⇦", "⇧", "⇨", "⇩", "⇪", "⇫", "⇬", "⇭", "⇮", "⇯", "⇰", "⇱", "⇲", "⇳", "⇴", "⇵", "⇶", "⇷", "⇸", "⇹", "⇺", "⇻", "⇼", "⇽", "➔", "➘", "➙", "➚", "➛", "➜", "➝", "➞", "➟", "➠", "➡", "➢", "➣", "➤", "➥", "➦", "➧", "➨", "➩", "➪", "➫", "➬", "➭", "➮", "➱", "➲", "➳", "➴", "➵", "➶", "➷", "➸", "➹", "➺", "➻", "➼", "➽", "➾"]
+    "sx": ["±", "÷", "×", "∈", "∏", "∑", "－", "＋", "＜", "≮", "＝", "≠", "＞", "≯", "∕", "√", "∝", "∞", "⟨", "⟩", "∟", "∠", "∥", "∧", "∨", "∩", "∪", "∫", "∮", "∴", "∵", "∷", "∽", "≈", "≌", "≒", "≡", "≤", "≥", "≦", "≧", "⊕", "⊙", "⊥", "⊿", "㏑", "㏒"]
+    "sb": ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "˜", "⁺", "⁻", "⁼", "⁽", "⁾", "ᴬ", "ᵃ", "ᵄ", "ᵅ", "ᶛ", "ᴭ", "ᵆ", "ᴮ", "ᴯ", "ᵇ", "ᵝ", "ᶜ", "ᵓ", "ᶝ", "ᴰ", "ᵈ", "ᶞ", "ᵟ", "ᴱ", "ᵉ", "ᴲ", "ᵊ", "ᵋ", "ᶟ", "ᵌ", "ᶠ", "ᶡ", "ᶲ", "ᵠ", "ᴳ", "ᵍ", "ᶢ", "ˠ", "ᵞ", "ᴴ", "ʰ", "ᶣ", "ʱ", "ᴵ", "ⁱ", "ᶤ", "ᵎ", "ᶥ", "ᴶ", "ʲ", "ᶨ", "ᴷ", "ᵏ", "ᴸ", "ᶫ", "ˡ", "ᶩ", "ᶪ", "ᴹ", "ᵐ", "ᶬ", "ᵚ", "ᶭ", "ᴺ", "ᴻ", "ⁿ", "ᵑ", "ᶮ", "ᶯ", "ᴼ", "ᵒ", "ᶱ", "ᴽ", "ᴾ", "ᵖ", "ᴿ", "ʳ", "ʶ", "ʴ", "ʵ", "ˢ", "ᶴ", "ᶳ", "ᵀ", "ᵗ", "ᶵ", "ᶿ", "ᵁ", "ᵘ", "ᶶ", "ᶷ", "ᵙ", "ⱽ", "ᵛ", "ᶺ", "ᶹ", "ᵂ", "ʷ", "ˣ", "ᵡ", "ʸ", "ᶻ", "ᶾ", "ᶽ", "ᶼ"]
+    "xb": ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₊", "₋", "₌", "₍", "₎", "‸", "ᴀ", "ₐ", "ᴁ", "ʙ", "ᴃ", "ᵦ", "ᴄ", "ᴐ", "ᴒ", "ᴅ", "ᴆ", "ᴇ", "ₑ", "ₔ", "ᵩ", "ɢ", "ʛ", "ᴦ", "ᵧ", "ʜ", "ₕ", "ɪ", "ᵻ", "ᵢ", "ᴊ", "ⱼ", "ᴋ", "ₖ", "ʟ", "ₗ", "ᴌ", "ᴧ", "ᴍ", "ₘ", "ꟺ", "ɴ", "ᴎ", "ₙ", "ᴏ", "ₒ", "ɶ", "ʘ", "ᴓ", "ᴑ", "ᴘ", "ₚ", "ᴨ", "ᴪ", "ʀ", "ᵣ", "ᴙ", "ʁ", "ᴚ", "ᵨ", "ₛ", "ᴛ", "ₜ", "ᴜ", "ᵤ", "ᵾ", "ᴠ", "ᵥ", "ᴡ", "ₓ", "ᵪ", "ʏ", "ᴢ", "ᴣ"]
+    "dw": ["Å", "℃", "％", "‰", "‱", "°", "℉", "㏃", "㏆", "㎈", "㏄", "㏅", "㎝", "㎠", "㎤", "㏈", "㎗", "㎙", "㎓", "㎬", "㏉", "㏊", "㏋", "㎐", "㏌", "㎄", "㎅", "㎉", "㎏", "㎑", "㏍", "㎘", "㎞", "㏎", "㎢", "㎦", "㎪", "㏏", "㎸", "㎾", "㏀", "㏐", "㏓", "㎧", "㎨", "㎡", "㎥", "㎃", "㏔", "㎆", "㎎", "㎒", "㏕", "㎖", "㎜", "㎟", "㎣", "㏖", "㎫", "㎳", "㎷", "㎹", "㎽", "㎿", "㏁", "㎁", "㎋", "㎚", "㎱", "㎵", "㎻", "㏘", "㎩", "㎀", "㎊", "㏗", "㏙", "㏚", "㎰", "㎴", "㎺", "㎭", "㎮", "㎯", "㏛", "㏜", "㎔", "㏝", "㎂", "㎌", "㎍", "㎕", "㎛", "㎲", "㎶", "㎼"]
+    "hb": ["￥", "¥", "¤", "￠", "＄", "$", "￡", "£", "৳", "฿", "₠", "₡", "₢", "₣", "₤", "₥", "₦", "₧", "₩", "₪", "₫", "€", "₭", "₮", "₯", "₰", "₱", "₲", "₳", "₴", "₵", "₶", "₷", "₸", "₹", "₺", "₨", "﷼"]
+    "py": ["ā", "á", "ǎ", "à", "ō", "ó", "ǒ", "ò", "ê", "ê̄", "ế", "ê̌", "ề", "ē", "é", "ě", "è", "ī", "í", "ǐ", "ì", "ū", "ú", "ǔ", "ù", "ü", "ǖ", "ǘ", "ǚ", "ǜ", "ḿ", "m̀", "ń", "ň", "ǹ", "ẑ", "ĉ", "ŝ", "ŋ"]
+    "zy": ["ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ", "ㄋ", "ㄌ", "ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ", "ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ", "ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ", "ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ", "ㄪ", "ㄫ", "ㄬ", "ㄭ", "ㆠ", "ㆡ", "ㆢ", "ㆣ", "ㆤ", "ㆥ", "ㆦ", "ㆧ", "ㆨ", "ㆩ", "ㆪ", "ㆫ", "ㆬ", "ㆭ", "ㆮ", "ㆯ", "ㆰ", "ㆱ", "ㆲ", "ㆳ", "ㆴ", "ㆵ", "ㆶ", "ㆷ"]
+    "jm": ["あ", "ぁ", "い", "ぃ", "う", "ぅ", "え", "ぇ", "お", "ぉ", "か", "ゕ", "が", "き", "ぎ", "く", "ぐ", "け", "ゖ", "げ", "こ", "ご", "さ", "ざ", "し", "じ", "す", "ず", "せ", "ぜ", "そ", "ぞ", "た", "だ", "ち", "ぢ", "つ", "っ", "づ", "て", "で", "と", "ど", "な", "に", "ぬ", "ね", "の", "は", "ば", "ぱ", "ひ", "び", "ぴ", "ふ", "ぶ", "ぷ", "へ", "べ", "ぺ", "ほ", "ぼ", "ぽ", "ま", "み", "む", "め", "も", "や", "ゃ", "ゆ", "ゅ", "よ", "ょ", "ら", "り", "る", "れ", "ろ", "わ", "ゎ", "ゐ", "ゔ", "ゑ", "を", "ん", "・", "ー", "ゝ", "ゞ", "ゟ"]
+    "pjm": ["ア", "ァ", "イ", "ィ", "ウ", "ゥ", "エ", "ェ", "オ", "ォ", "カ", "ヵ", "ガ", "キ", "ギ", "ク", "グ", "ケ", "ヶ", "ゲ", "コ", "ゴ", "サ", "ザ", "シ", "ジ", "ス", "ズ", "セ", "ゼ", "ソ", "ゾ", "タ", "ダ", "チ", "ヂ", "ツ", "ッ", "ヅ", "テ", "デ", "ト", "ド", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "バ", "パ", "ヒ", "ビ", "ピ", "フ", "ブ", "プ", "ヘ", "ベ", "ペ", "ホ", "ボ", "ポ", "マ", "ミ", "ム", "メ", "モ", "ヤ", "ャ", "ユ", "ュ", "ヨ", "ョ", "ラ", "リ", "ル", "レ", "ロ", "ワ", "ヮ", "ヰ", "ヸ", "ヴ", "ヱ", "ヹ", "ヲ", "ヺ", "ン", "・", "ー", "ヽ", "ヾ", "ヿ", "ㇰ", "ㇱ", "ㇲ", "ㇳ", "ㇴ", "ㇵ", "ㇶ", "ㇷ", "ㇸ", "ㇹ", "ㇺ", "ㇻ", "ㇼ", "ㇽ", "ㇾ", "ㇿ"]
+    "hw": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"]
+    "xl": ["α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ρ", "σ", "ς", "τ", "υ", "φ", "χ", "ψ", "ω"]
+    "xld": ["Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ", "Λ", "Μ", "Ν", "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ", "Φ", "Χ", "Ψ", "Ω"]
+    "lm": ["ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ", "ⅺ", "ⅻ", "ⅼ", "ⅽ", "ⅾ", "ⅿ"]
+    "lmd": ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", "Ⅼ", "Ⅽ", "Ⅾ", "Ⅿ"]
+    "ey": ["а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"]
+    "eyd": ["А", "Б", "В", "Г", "Д", "Е", "Ё", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ы", "Ь", "Э", "Ю", "Я"]
+    "bq": ["☻", "☺", "☹"]
+    "1": ["一", "壹", "₁", "¹", "Ⅰ", "ⅰ", "①", "➀", "❶", "➊", "⓵", "⑴", "⒈", "１", "㊀", "㈠", "弌", "壱", "幺", "㆒"]
+    "2": ["二", "貳", "₂", "²", "Ⅱ", "ⅱ", "②", "➁", "❷", "➋", "⓶", "⑵", "⒉", "２", "㊁", "㈡", "弍", "弐", "貮", "㒃", "㒳", "兩", "倆", "㆓"]
+    "3": ["三", "叄", "₃", "³", "Ⅲ", "ⅲ", "③", "➂", "❸", "➌", "⓷", "⑶", "⒊", "３", "㊂", "㈢", "參", "参", "叁", "弎", "仨", "㆔"]
+    "4": ["四", "肆", "₄", "⁴", "Ⅳ", "ⅳ", "④", "➃", "❹", "➍", "⓸", "⑷", "⒋", "４", "㊃", "㈣", "亖"]
+    "5": ["五", "伍", "₅", "⁵", "Ⅴ", "ⅴ", "⑤", "➄", "❺", "➎", "⓹", "⑸", "⒌", "５", "㊄", "㈤", "㐅", "㠪", "𠄡"]
+    "6": ["六", "陸", "₆", "⁶", "Ⅵ", "ⅵ", "⑥", "➅", "❻", "➏", "⓺", "⑹", "⒍", "６", "㊅", "㈥", "ↅ"]
+    "7": ["七", "柒", "₇", "⁷", "Ⅶ", "ⅶ", "⑦", "➆", "❼", "➐", "⓻", "⑺", "⒎", "７", "㊆", "㈦", "漆"]
+    "8": ["八", "捌", "₈", "⁸", "Ⅷ", "ⅷ", "⑧", "➇", "❽", "➑", "⓼", "⑻", "⒏", "８", "㊇", "㈧"]
+    "9": ["九", "玖", "₉", "⁹", "Ⅸ", "ⅸ", "⑨", "➈", "❾", "➒", "⓽", "⑼", "⒐", "９", "㊈", "㈨"]
+    "0": ["〇", "零", "₀", "⁰", "⓪", "⓿", "０"]
+    "10": ["十", "拾", "₁₀", "¹⁰", "Ⅹ", "ⅹ", "⑩", "➉", "❿", "➓", "⓾", "⑽", "⒑", "１０", "㊉", "㈩", "什"]
+    "fs": ["⅟", "½", "↉", "⅓", "⅔", "¼", "¾", "⅕", "⅖", "⅗", "⅘", "⅙", "⅚", "⅐", "⅛", "⅜", "⅝", "⅞", "⅑", "⅒"]
+    "bd": ["、", "。", "「", "」", "『", "』", "【", "】", "〈", "〉", "《", "》", "⟨", "⟩", "₋", "⁻", "―", "˗", "ˉ", "＿", "﹍", "﹎", "．", "¡", "‼", "⁉", "¿", "؟", "⁈", "⁇", "､", "｡", "〃", "〄", "々", "〆", "〇", "〒", "〓", "〔", "〕", "〖", "〗", "〘", "〙", "〚", "〛", "〜", "〝", "〞", "〟", "〠", "〰", "〱", "〲", "〳", "〴", "〵", "〶", "〷", "〻", "〼", "〽"]
+    "pp": ["乛", "冫", "丷", "龹", "⺌", "龸", "亻", "亼", "亽", "仒", "冖", "冂", "冃", "冄", "宀", "罒", "㓁", "罓", "冈", "凵", "厶", "刂", "勹", "匚", "匸", "卩", "阝", "厂", "丆", "广", "壬", "訁", "讠", "釒", "钅", "飠", "饣", "龺", "攵", "夂", "夊", "尢", "尣", "兂", "旡", "巜", "巛", "彐", "彑", "彡", "彳", "龰", "辶", "廴", "㞢", "忄", "㣺", "扌", "爫", "龵", "廾", "歺", "癶", "氵", "氺", "火", "灬", "爿", "丬", "疒", "牜", "⺶", "犭", "豕", "豸", "虍", "艹", "卝", "龷", "丗", "龶", "芈", "丵", "菐", "黹", "礻", "衤", "糸", "糹", "纟", "龻", "镸", "髟", "襾", "覀", "吅", "㗊", "㠭", "㸚", "叕"]
+    "bdz": ["﹅", "﹆", "﹁", "﹂", "﹃", "﹄", "︙", "︱", "︻", "︼", "︗", "︘", "︵", "︶", "︷", "︸", "︹", "︺", "︿", "﹀", "︽", "︾", "︰", "︲", "︳", "︴", "﹉", "﹊", "﹋", "﹌", "﹍", "﹎", "﹏", "﹇", "﹈", "︐", "︑", "︒", "︔", "︕", "︖"]
   tabs:
     name: 更多
-    type: TABS
+    type: GROUP
+    keys: &Astra_symbol_menu [ 符号: 'fh', 电脑: 'dn', 象棋: 'xq', 麻将: 'mj', 骰子: 'sz', 扑克: 'pk', 天气: 'tq', 音乐: 'yy', 八卦: 'bg', 易经: 'lssg', 天体: 'tt',  星座: 'xz',  星号: 'xh',  方块: 'fk',  几何: 'jh',  箭头: 'jt',  数学: 'sx',  上标: 'sb',  下标: 'xb',  单位: 'dw',  货币: 'hb',  拼音: 'py',  注音: 'zy',  假名: 'jm',  片假: 'pjm',  韩文: 'hw',  希腊: 'xl',  希大: 'xld', 罗马:   'lm',  罗大:   'lmd', 俄语:   'ey',  俄大:   'eyd', 表情:  'bq',  一: '1',  二: '2',  三: '3',  四: '4',  五: '5',  六: '6',  七: '7',  八: '8',  九: '9',  零: '0',  十: '10',  分数: 'fs',  标点: 'bd',  偏旁: 'pp',  竖标:  'bdz'  ]
   history:
     name: 常用
     type: HISTORY
@@ -1134,9 +1185,9 @@ liquid_keyboard:
     name: 假名
     keys: "あいうえおかがきぎくぐけげこごさざしじすずせぜそぞただちぢつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろわをんアィイウェエオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロワヲン"
   symbollist:
-    type: SYMBOL
+    type: GROUP
     name: 符号表
-    keys: [ 符号: '/fh', 电脑: '/dn', 象棋: '/xq', 麻将: '/mj', 骰子: '/sz', 扑克: '/pk', 天气: '/tq', 音乐: '/yy', 八卦: '/bg', 易经: '/lssg', 天体: '/tt',  星座: '/xz',  星号: '/xh',  方块: '/fk',  几何: '/jh',  箭头: '/jt',  数学: '/sx',  上标: '/sb',  下标: '/xb',  单位: '/dw',  货币: '/hb',  拼音: '/py',  注音: '/zy',  假名: '/jm',  片假: '/pjm',  韩文: '/hw',  希腊: '/xl',  希大: '/xld', 罗马:   '/lm',  罗大:   '/lmd', 俄语:   '/ey',  俄大:   '/eyd', 表情:  '/bq',  一: '/1',  二: '/2',  三: '/3',  四: '/4',  五: '/5',  六: '/6',  七: '/7',  八: '/8',  九: '/9',  零: '/0',  十: '/10',  分数: '/fs',  标点: '/bd',  偏旁: '/pp',  竖标:  '/bdz'  ]
+    keys: *Astra_symbol_menu
 
 tool_bar:
   button_spacing: 5 # 按钮间距
@@ -1309,26 +1360,26 @@ preset_keyboards:
     keys:
 
       - {click: '{}{Left}', long_click: '【】{Left}', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
-      - {click: 1}
-      - {click: 2}
-      - {click: 3}
+      - {click: Astra_digit_1}
+      - {click: Astra_digit_2}
+      - {click: Astra_digit_3}
       - {click: '+', long_click: '#', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: BackSpace, key_back_color: bbs, key_text_color: tbs, key_symbol_color: sgn}
       - {click: '_', long_click: '[]{Left}', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
-      - {click: 4}
-      - {click: 5}
-      - {click: 6}
+      - {click: Astra_digit_4}
+      - {click: Astra_digit_5}
+      - {click: Astra_digit_6}
       - {click: '-', long_click: '%', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {label: EN, click: Keyboard_defaulten, key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: '(){Left}', long_click: '@', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
-      - {click: 7, long_click: select_all}
-      - {click: 8, long_click: copy}
-      - {click: 9, long_click: paste_clip, swipe_down: paste}
+      - {click: Astra_digit_7, long_click: select_all}
+      - {click: Astra_digit_8, long_click: copy}
+      - {click: Astra_digit_9, long_click: paste_clip, swipe_down: paste}
       - {click: '*', long_click: '±', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: space1, key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: Keyboard_default, long_click: ':', key_back_color: bgn, key_text_color: 'tgn', key_symbol_color: sgn}
       - {click: ., long_click: Keyboard_bqrw, key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
-      - {click: 0, long_click: cut}
+      - {click: Astra_digit_0, long_click: cut}
       - {click: '=', long_click: '≠', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: '/', long_click: '\', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: Return, long_click: Menu, key_back_color: benter, key_text_color: tenter, key_symbol_color: senter}
@@ -4311,56 +4362,66 @@ preset_keys:
   space_R1: {label: "EN", functional: false, send: Eisu_toggle, select: letter}
   space_R2: {label: "中", functional: false, send: Eisu_toggle, select: fbj}
   #符号
-  符号: {text: '{Escape}/fh', label: 符号, functional: false}
-  电脑: {text: '{Escape}/dn', label: 电脑, functional: false}
-  象棋: {text: '{Escape}/xq', label: 象棋, functional: false}
-  麻将: {text: '{Escape}/mj', label: 麻将, functional: false}
-  骰子: {text: '{Escape}/sz', label: 骰子, functional: false}
-  扑克: {text: '{Escape}/pk', label: 扑克, functional: false}
-  天气: {text: '{Escape}/tq', label: 天气, functional: false}
-  音乐: {text: '{Escape}/yy', label: 音乐, functional: false}
-  八卦: {text: '{Escape}/bg', label: 八卦, functional: false}
-  易经: {text: '{Escape}/lssg', label: 易经, functional: false}
-  天体: {text: '{Escape}/tt', label: 天体, functional: false}
-  星座: {text: '{Escape}/xz', label: 星座, functional: false}
-  星号: {text: '{Escape}/xh', label: 星号, functional: false}
-  方块: {text: '{Escape}/fk', label: 方块, functional: false}
-  几何: {text: '{Escape}/jh', label: 几何, functional: false}
-  箭头: {text: '{Escape}/jt', label: 箭头, functional: false}
-  数学: {text: '{Escape}/sx', label: 数学, functional: false}
-  上标: {text: '{Escape}/sb', label: 上标, functional: false}
-  下标: {text: '{Escape}/xb', label: 下标, functional: false}
-  单位: {text: '{Escape}/dw', label: 单位, functional: false}
-  货币: {text: '{Escape}/hb', label: 货币, functional: false}
-  拼音: {text: '{Escape}/py', label: 拼音, functional: false}
-  注音: {text: '{Escape}/zy', label: 注音, functional: false}
-  假名: {text: '{Escape}/jm', label: 假名, functional: false}
-  片假名: {text: '{Escape}/pjm', label: 片假名, functional: false}
-  韩文: {text: '{Escape}/hw', label: 韩文, functional: false}
-  希腊: {text: '{Escape}/xl', label: 希腊, functional: false}
-  希腊大写: {text: '{Escape}/xld', label: 大写, functional: false}
-  罗马: {text: '{Escape}/lm', label: 罗马, functional: false}
-  罗马大写: {text: '{Escape}/lmd', label: 大写, functional: false}
-  俄语: {text: '{Escape}/ey', label: 俄语, functional: false}
-  俄语大写: {text: '{Escape}/eyd', label: 大写, functional: false}
-  表情: {text: '{Escape}/bq', label: 😁}
-  一: {text: '{Escape}/1', label: 1}
-  二: {text: '{Escape}/2', label: 2}
-  三: {text: '{Escape}/3', label: 3}
-  四: {text: '{Escape}/4', label: 4}
-  五: {text: '{Escape}/5', label: 5}
-  六: {text: '{Escape}/6', label: 6}
-  七: {text: '{Escape}/7', label: 7}
-  八: {text: '{Escape}/8', label: 8}
-  九: {text: '{Escape}/9', label: 9}
-  零: {text: '{Escape}/0', label: 0}
-  十: {text: '{Escape}/10', label: 10}
-  分数: {text: '{Escape}/fs', label: 分数, functional: false}
-  标点: {text: '{Escape}/bd', label: 标点, functional: false}
-  偏旁: {text: '{Escape}/pp', label: 偏旁, functional: false}
-  竖标点: {text: '{Escape}/bdz', label: 竖标, functional: false}
+  符号: {command: astra_symbol_group, option: 'fh', label: 符号, functional: false}
+  电脑: {command: astra_symbol_group, option: 'dn', label: 电脑, functional: false}
+  象棋: {command: astra_symbol_group, option: 'xq', label: 象棋, functional: false}
+  麻将: {command: astra_symbol_group, option: 'mj', label: 麻将, functional: false}
+  骰子: {command: astra_symbol_group, option: 'sz', label: 骰子, functional: false}
+  扑克: {command: astra_symbol_group, option: 'pk', label: 扑克, functional: false}
+  天气: {command: astra_symbol_group, option: 'tq', label: 天气, functional: false}
+  音乐: {command: astra_symbol_group, option: 'yy', label: 音乐, functional: false}
+  八卦: {command: astra_symbol_group, option: 'bg', label: 八卦, functional: false}
+  易经: {command: astra_symbol_group, option: 'lssg', label: 易经, functional: false}
+  天体: {command: astra_symbol_group, option: 'tt', label: 天体, functional: false}
+  星座: {command: astra_symbol_group, option: 'xz', label: 星座, functional: false}
+  星号: {command: astra_symbol_group, option: 'xh', label: 星号, functional: false}
+  方块: {command: astra_symbol_group, option: 'fk', label: 方块, functional: false}
+  几何: {command: astra_symbol_group, option: 'jh', label: 几何, functional: false}
+  箭头: {command: astra_symbol_group, option: 'jt', label: 箭头, functional: false}
+  数学: {command: astra_symbol_group, option: 'sx', label: 数学, functional: false}
+  上标: {command: astra_symbol_group, option: 'sb', label: 上标, functional: false}
+  下标: {command: astra_symbol_group, option: 'xb', label: 下标, functional: false}
+  单位: {command: astra_symbol_group, option: 'dw', label: 单位, functional: false}
+  货币: {command: astra_symbol_group, option: 'hb', label: 货币, functional: false}
+  拼音: {command: astra_symbol_group, option: 'py', label: 拼音, functional: false}
+  注音: {command: astra_symbol_group, option: 'zy', label: 注音, functional: false}
+  假名: {command: astra_symbol_group, option: 'jm', label: 假名, functional: false}
+  片假名: {command: astra_symbol_group, option: 'pjm', label: 片假名, functional: false}
+  韩文: {command: astra_symbol_group, option: 'hw', label: 韩文, functional: false}
+  希腊: {command: astra_symbol_group, option: 'xl', label: 希腊, functional: false}
+  希腊大写: {command: astra_symbol_group, option: 'xld', label: 大写, functional: false}
+  罗马: {command: astra_symbol_group, option: 'lm', label: 罗马, functional: false}
+  罗马大写: {command: astra_symbol_group, option: 'lmd', label: 大写, functional: false}
+  俄语: {command: astra_symbol_group, option: 'ey', label: 俄语, functional: false}
+  俄语大写: {command: astra_symbol_group, option: 'eyd', label: 大写, functional: false}
+  表情: {command: astra_symbol_group, option: 'bq', label: 😁}
+  一: {command: astra_symbol_group, option: '1', label: 1}
+  二: {command: astra_symbol_group, option: '2', label: 2}
+  三: {command: astra_symbol_group, option: '3', label: 3}
+  四: {command: astra_symbol_group, option: '4', label: 4}
+  五: {command: astra_symbol_group, option: '5', label: 5}
+  六: {command: astra_symbol_group, option: '6', label: 6}
+  七: {command: astra_symbol_group, option: '7', label: 7}
+  八: {command: astra_symbol_group, option: '8', label: 8}
+  九: {command: astra_symbol_group, option: '9', label: 9}
+  零: {command: astra_symbol_group, option: '0', label: 0}
+  十: {command: astra_symbol_group, option: '10', label: 10}
+  分数: {command: astra_symbol_group, option: 'fs', label: 分数, functional: false}
+  标点: {command: astra_symbol_group, option: 'bd', label: 标点, functional: false}
+  偏旁: {command: astra_symbol_group, option: 'pp', label: 偏旁, functional: false}
+  竖标点: {command: astra_symbol_group, option: 'bdz', label: 竖标, functional: false}
 
   # Astra-specific actions: keep custom behavior out of the upstream themes.
+  Astra_digit_0: {label: "0", commit: "0"}
+  Astra_digit_1: {label: "1", commit: "1"}
+  Astra_digit_2: {label: "2", commit: "2"}
+  Astra_digit_3: {label: "3", commit: "3"}
+  Astra_digit_4: {label: "4", commit: "4"}
+  Astra_digit_5: {label: "5", commit: "5"}
+  Astra_digit_6: {label: "6", commit: "6"}
+  Astra_digit_7: {label: "7", commit: "7"}
+  Astra_digit_8: {label: "8", commit: "8"}
+  Astra_digit_9: {label: "9", commit: "9"}
   Astra_z_symbol: {label: '-', command: astra_symbol, option: z}
   Astra_comma_symbol: {command: astra_symbol, option: comma}
   Astra_tilde: {label: '~', command: astra_symbol, option: tilde}
