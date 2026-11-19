@@ -9,6 +9,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
+import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.util.toast
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,8 @@ object ThemePickerDialog {
                         scope.launch {
                             afterConfirm?.invoke()
                             val newItem = allThemes[which]
-                            val resolvedThemeId = ThemeManager.selectTheme(newItem.configId, importExternal = true)
+                            com.osfans.trime.daemon.syncUserDataSafely()
+                            val resolvedThemeId = ThemeManager.selectTheme(newItem.configId)
                             dialog.dismiss()
                             if (resolvedThemeId != newItem.configId) {
                                 // Chosen theme unavailable: report the one actually in effect.

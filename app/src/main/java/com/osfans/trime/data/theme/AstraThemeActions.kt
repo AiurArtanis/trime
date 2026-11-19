@@ -13,6 +13,5 @@ internal object AstraThemeActions {
 
     fun symbolsLabel(ascii: Boolean): String = if (ascii) "⌘" else "☯"
 
-    fun themeCatalog(shared: List<ThemeItem>, user: List<ThemeItem>): List<ThemeItem> =
-        (user + shared).distinctBy { it.configId }
+    fun themeCatalog(shared: List<ThemeItem>, user: List<ThemeItem>): List<ThemeItem> = (user + shared).distinctBy { it.configId }
 }

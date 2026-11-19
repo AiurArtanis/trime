@@ -27,7 +27,7 @@ class EnterKeyDisplayDelegate(override val di: DI) : DIAware {
         CUSTOM_PREFERRED,
     }
 
-    val mode: Mode = runCatching { Mode.entries[theme.generalStyle.enterLabelMode] }.getOrDefault(Mode.ACTION_LABEL_NEVER)
+    val mode: Mode = runCatching { Mode.entries[theme.style.enterLabelMode] }.getOrDefault(Mode.ACTION_LABEL_NEVER)
 
     var keyLabel: String = DEFAULT_LABEL
         private set
@@ -39,8 +39,8 @@ class EnterKeyDisplayDelegate(override val di: DI) : DIAware {
     /** Updates the visible text before notifying listeners, without repeating unchanged labels. */
     internal fun updateLabel(inputType: Int, imeOptions: Int, actionId: Int, actionLabel: CharSequence?) {
         val action = EditorEnterAction.resolve(inputType, imeOptions, actionId, actionLabel)
-        val label = EditorEnterAction.label(action, actionLabel, mode.ordinal, theme.generalStyle.enterLabel.default) { themeAction ->
-            with(theme.generalStyle.enterLabel) {
+        val label = EditorEnterAction.label(action, actionLabel, mode.ordinal, theme.style.enterLabels.default) { themeAction ->
+            with(theme.style.enterLabels) {
                 when (themeAction) {
                     EditorInfo.IME_ACTION_DONE -> done
                     EditorInfo.IME_ACTION_GO -> go

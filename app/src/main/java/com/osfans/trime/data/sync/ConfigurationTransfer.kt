@@ -26,9 +26,8 @@ object ConfigurationTransfer {
         }
     }
 
-    internal fun shouldMergeDestination(path: String, existsInSource: Boolean): Boolean =
-        !existsInSource || path.endsWith(".custom.yaml") ||
-            path in setOf("default.yaml", "user.yaml", "custom_phrase.txt")
+    internal fun shouldMergeDestination(path: String, existsInSource: Boolean): Boolean = !existsInSource || path.endsWith(".custom.yaml") ||
+        path in setOf("default.yaml", "user.yaml", "custom_phrase.txt")
 
     fun readOriginal(context: Context, tree: Uri, staging: File) {
         require(tree.authority == "com.osfans.trime.provider") { "Select the original Trime folder" }
@@ -59,12 +58,11 @@ object ConfigurationTransfer {
         }
     }
 
-    internal fun sourceRoots(paths: List<String>): List<String> =
-        if (paths.any { it.startsWith("shared/") || it.startsWith("rime/") }) {
-            listOf("shared/", "rime/")
-        } else {
-            listOf("")
-        }
+    internal fun sourceRoots(paths: List<String>): List<String> = if (paths.any { it.startsWith("shared/") || it.startsWith("rime/") }) {
+        listOf("shared/", "rime/")
+    } else {
+        listOf("")
+    }
 
     fun portable(path: String): Boolean = path.split('/').none {
         it == "build" || it == "sync" || it.endsWith(".bak") || it.contains(".userdb") || it.startsWith(".")

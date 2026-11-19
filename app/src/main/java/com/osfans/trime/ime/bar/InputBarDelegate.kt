@@ -24,9 +24,9 @@ import com.osfans.trime.core.Candidates
 import com.osfans.trime.core.RimeMessage
 import com.osfans.trime.daemon.RimeSession
 import com.osfans.trime.daemon.launchOnReady
-import com.osfans.trime.data.db.ClipboardHelper
+import com.osfans.trime.data.clip.ClipboardEntity
+import com.osfans.trime.data.clip.ClipboardHelper
 import com.osfans.trime.data.prefs.AppPrefs
-import com.osfans.trime.data.theme.KeyActionManager
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeScope
 import com.osfans.trime.ime.bar.ui.AlwaysUi
@@ -59,6 +59,7 @@ import splitties.views.dsl.core.lParams
 import splitties.views.dsl.core.matchParent
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
+import kotlin.math.min
 
 class InputBarDelegate(override val di: DI) :
     DIAware,
@@ -72,7 +73,7 @@ class InputBarDelegate(override val di: DI) :
     private val candidate: CompactCandidateDelegate by instance()
     private val rime: RimeSession by instance()
 
-    val themedHeight = theme.generalStyle.run { candidateViewHeight + commentHeight }
+    val themedHeight = theme.style.run { candidateViewHeight + commentHeight }
 
     private val prefs = AppPrefs.defaultInstance()
 
@@ -81,6 +82,8 @@ class InputBarDelegate(override val di: DI) :
     private val clipboardSuggestion by prefs.clipboard.clipboardSuggestion
 
     private val clipboardSuggestionTimeout by prefs.clipboard.clipboardSuggestionTimeout
+
+    private val clipboardMaskSensitive by prefs.clipboard.clipboardMaskSensitive
 
     private var clipboardTimeoutJob: Job? = null
 
@@ -91,10 +94,14 @@ class InputBarDelegate(override val di: DI) :
     private val onClipboardUpdateListener = ClipboardHelper.OnClipboardUpdateListener {
         if (!clipboardSuggestion) return@OnClipboardUpdateListener
         service.lifecycleScope.launch {
-            if (it.text.isNullOrEmpty()) {
+            if (it.text.isEmpty()) {
                 isClipboardFresh = false
             } else {
-                alwaysUi.clipboardUi.text.text = it.text.take(42)
+                alwaysUi.clipboardUi.text.text = if (it.sensitive && clipboardMaskSensitive) {
+                    ClipboardEntity.BULLET.repeat(min(42, it.text.length))
+                } else {
+                    it.text.take(42)
+                }
                 isClipboardFresh = true
                 launchClipboardTimeoutJob()
             }
@@ -137,7 +144,7 @@ class InputBarDelegate(override val di: DI) :
             // ViewAnimator keeps that touch target even when its child becomes GONE.
             if (barStateMachine.currentState != QuickBarStateMachine.State.Always) return@AlwaysUi
             if (action.isNotEmpty()) {
-                commonKeyboardActionListener.listener.onAction(KeyActionManager.getAction(action))
+                commonKeyboardActionListener.listener.onAction(theme.resolveAction(action))
             } else {
                 windowManager.attachWindow(SwitchOptionWindow(di))
             }
@@ -148,12 +155,12 @@ class InputBarDelegate(override val di: DI) :
             }
             clipboardUi.suggestionView.apply {
                 setOnClickListener {
-                    val content = ClipboardHelper.lastBean?.text
+                    val content = ClipboardHelper.lastEntity?.text
                     content?.let { service.commitText(it) }
                     dismissClipboardSuggestion()
                 }
                 setOnLongClickListener {
-                    ClipboardHelper.lastBean?.let {
+                    ClipboardHelper.lastEntity?.let {
                         AppUtils.launchClipEdit(context, it.id, ClipEditActivity.FROM_CLIPBOARD)
                     }
                     true
@@ -196,10 +203,12 @@ class InputBarDelegate(override val di: DI) :
                     setUnrollButtonToAttach()
                     setUnrollButtonEnabled(true)
                 }
+
                 UnrollButtonStateMachine.State.ClickToDetachWindow -> {
                     setUnrollButtonToDetach()
                     setUnrollButtonEnabled(true)
                 }
+
                 UnrollButtonStateMachine.State.Hidden -> {
                     setUnrollButtonEnabled(false)
                 }
@@ -255,8 +264,8 @@ class InputBarDelegate(override val di: DI) :
                 scope.decorDrawable(
                     "candidate_background",
                     "candidate_border_color",
-                    dp(theme.generalStyle.candidateBorder),
-                    dp(theme.generalStyle.candidateBorderRound),
+                    dp(theme.style.candidateBorder),
+                    dp(theme.style.candidateBorderRound),
                 )
             add(alwaysUi.root, lParams(matchParent, matchParent))
             add(candidateUi.root, lParams(matchParent, matchParent))
@@ -274,8 +283,8 @@ class InputBarDelegate(override val di: DI) :
             scope.decorDrawable(
                 "candidate_background",
                 "candidate_border_color",
-                context.dp(theme.generalStyle.candidateBorder),
-                context.dp(theme.generalStyle.candidateBorderRound),
+                context.dp(theme.style.candidateBorder),
+                context.dp(theme.style.candidateBorderRound),
             )
         alwaysUi.refreshColors()
         candidateUi.refreshColors()

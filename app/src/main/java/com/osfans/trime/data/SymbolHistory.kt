@@ -7,18 +7,18 @@ import com.osfans.trime.util.appContext
 
 class SymbolHistory(
     val capacity: Int,
-    private val file: java.io.File = appContext.filesDir.resolve(FILE_NAME),
+    private val file: java.io.File = com.osfans.trime.TrimeApplication.getInstance().directBootAwareContext.filesDir.resolve(FILE_NAME),
 ) {
     companion object {
         const val FILE_NAME = "symbol_history"
         private const val FORMAT = "#astra-symbol-history-v2"
         private val fileLock = Any()
+
         // Explicit list: do not discard mathematical signs or emoji by Unicode category.
         private const val COMMON_PUNCTUATION = ",，.。．:：;；、!！?？\"'＂＇“”‘’「」『』()（）[]【】{}｛｝《》〈〉…—–@＠/／%％#＃"
 
-        private fun shouldKeep(symbol: String): Boolean =
-            symbol.isNotBlank() && '\n' !in symbol && '\r' !in symbol &&
-                symbol.any { !it.isWhitespace() && it !in COMMON_PUNCTUATION && it != '\uFE0E' && it != '\uFE0F' }
+        private fun shouldKeep(symbol: String): Boolean = symbol.isNotBlank() && '\n' !in symbol && '\r' !in symbol &&
+            symbol.any { !it.isWhitespace() && it !in COMMON_PUNCTUATION && it != '\uFE0E' && it != '\uFE0F' }
     }
 
     // Insertion order stores recency, oldest first; counts determine display priority.

@@ -8,20 +8,16 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.NinePatch
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.NinePatchDrawable
 import androidx.annotation.ColorInt
-import androidx.annotation.Keep
 import androidx.collection.LruCache
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.math.MathUtils
-import com.osfans.trime.data.base.DataManager
-import com.osfans.trime.data.prefs.PreferenceDelegate
-import com.osfans.trime.data.theme.model.ColorScheme
+import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.util.ColorUtils
 import com.osfans.trime.util.NinePatchBitmapFactory
 import com.osfans.trime.util.WeakHashSet
@@ -42,9 +38,10 @@ object ColorManager {
     private val prefs = ThemeManager.prefs
 
     private val dayNightState = DayNightSchemeState()
+    private val isNightMode get() = dayNightState.isNight
 
-    @Keep
-    private val followModeListener = PreferenceDelegate.OnChangeListener<Boolean> { _, _ ->
+    @androidx.annotation.Keep
+    private val followModeListener = com.osfans.trime.data.prefs.PreferenceDelegate.OnChangeListener<Boolean> { _, _ ->
         dayNightState.manualSchemeId = null
         activateScheme(notify = true)
     }
@@ -114,16 +111,24 @@ object ColorManager {
      */
     fun attachTheme(theme: Theme) {
         prefs.migrateAstraDayNight(theme.name)
+        if (theme.name == "Astra" && prefs.normalModeColor.getValue() !in theme.presetColorSchemes) {
+            prefs.normalModeColor.setValue("astra_solar")
+        }
         dayNightState.manualSchemeId = null
         bitmapCache?.evictAll()
         scope = ThemeScope(theme)
         activateScheme(notify = false)
     }
 
-    fun setColorScheme(scheme: ColorScheme) {
-        dayNightState.manualSchemeId = scheme.id
-        prefs.normalModeColor.setValue(scheme.id)
-        activateScheme(scheme, notify = true)
+    /**
+     * Switches to the scheme [schemeId] and remembers it as the user's choice.
+     * The scheme is resolved from the preference afterwards, so the day/night
+     * links a scheme may declare are honoured, like an automatic switch.
+     */
+    fun setColorScheme(schemeId: String) {
+        dayNightState.manualSchemeId = null
+        prefs.normalModeColor.setValue(schemeId)
+        activateScheme(notify = true)
     }
 
     val isDarkScheme: Boolean
@@ -131,25 +136,25 @@ object ColorManager {
 
     fun toggleLightDark() {
         val theme = requireScope().theme
-        val link = activeColorScheme.colors[if (isDarkScheme) "light_scheme" else "dark_scheme"]
-        val target = ColorSchemeResolver.astraModeScheme(theme.colorSchemes, theme.name, !isDarkScheme)
-            ?: theme.colorSchemes.find { it.id == link }
-            ?: theme.colorSchemes.find { it.id == if (isDarkScheme) "default" else "steam" }
-            ?: return
-        // Do not permanently disable following the system when using the keyboard toggle.
-        setColorScheme(target)
+        val targetId = if (theme.name == "Astra") {
+            if (isDarkScheme) "astra_solar" else "astra_luna"
+        } else {
+            activeColorScheme[if (isDarkScheme) "light_scheme" else "dark_scheme"] ?: return
+        }
+        val target = theme.presetColorSchemes[targetId] ?: return
+        dayNightState.manualSchemeId = targetId
+        prefs.normalModeColor.setValue(targetId)
+        activateScheme(target, notify = true)
     }
 
     private fun requireScope(): ThemeScope = requireNotNull(scope) { "ColorManager is not initialized" }
 
-    private fun resolveActiveScheme(theme: Theme): ColorScheme =
-        theme.colorSchemes.find { it.id == dayNightState.manualSchemeId } ?: ColorSchemeResolver.resolve(
-            schemes = theme.colorSchemes,
-            selectedSchemeId = prefs.normalModeColor.getValue(),
-            followSystemDayNight = prefs.followSystemDayNight.getValue(),
-            isNightMode = dayNightState.isNight,
-            themeName = theme.name,
-        )
+    private fun resolveActiveScheme(theme: Theme): ColorScheme = theme.presetColorSchemes[dayNightState.manualSchemeId] ?: ColorSchemeResolver.resolve(
+        schemes = theme.presetColorSchemes,
+        selectedSchemeId = prefs.normalModeColor.getValue(),
+        followSystemDayNight = prefs.followSystemDayNight.getValue(),
+        isNightMode = isNightMode,
+    )
 
     /**
      * Re-resolves the active scheme from the prefs and current theme, or
@@ -168,7 +173,7 @@ object ColorManager {
         if (notify) fireChange()
     }
 
-    private fun backgroundFolder(scope: ThemeScope) = scope.theme.generalStyle.backgroundFolder
+    private fun backgroundFolder(scope: ThemeScope) = scope.theme.style.backgroundFolder
 
     /**
      * Resolves a color key against the given scope. Exposed so UI code can
@@ -183,7 +188,7 @@ object ColorManager {
         if (tableEntry is ColorTable.Value.Color) return tableEntry.argb
         // Keys defined only by a theme resolve through the same chain rules.
         val scheme = requireNotNull(scope.activeColorScheme)
-        val raw = ColorTable.resolveRaw(key, scheme.colors, scope.theme.fallbackColors)
+        val raw = ColorTable.resolveRaw(key, scheme, scope.theme.fallbackColors)
         return try {
             if (raw == null) throw IllegalArgumentException("$key not found")
             ColorUtils.parseColor(raw)
@@ -207,7 +212,7 @@ object ColorManager {
         }
         // Keys defined only by a theme resolve through the same chain rules.
         val scheme = requireNotNull(scope.activeColorScheme)
-        val raw = ColorTable.resolveRaw(key, scheme.colors, scope.theme.fallbackColors)
+        val raw = ColorTable.resolveRaw(key, scheme, scope.theme.fallbackColors)
         return parseDrawable(scope, raw ?: key)
     }
 
@@ -216,9 +221,14 @@ object ColorManager {
         value: String,
     ): Drawable? {
         if (value.isEmpty()) return null
-        if (ColorTable.isImageValue(value)) return imageDrawable(scope, value)
-        val color = runCatching { ColorUtils.parseColor(value) }.getOrDefault(Color.TRANSPARENT)
-        return GradientDrawable().apply { setColor(color) }
+        val parsed = ColorTable.parseValue(value) {
+            runCatching { ColorUtils.parseColor(it) }.getOrNull()
+        }
+        return when (parsed) {
+            is ColorTable.Value.Color -> GradientDrawable().apply { setColor(parsed.argb) }
+            is ColorTable.Value.Image -> imageDrawable(scope, parsed.path)
+            ColorTable.Value.None -> null
+        }
     }
 
     private fun imageDrawable(
@@ -281,6 +291,7 @@ object ColorManager {
                     }
                 }
             }
+
         else -> drawable?.also { it.alpha = MathUtils.clamp(alpha, 0, 255) }
     }
 

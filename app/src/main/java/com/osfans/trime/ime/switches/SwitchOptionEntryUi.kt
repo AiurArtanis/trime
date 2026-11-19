@@ -48,8 +48,8 @@ class SwitchOptionEntryUi(
                 scope.decorDrawable(
                     "key_back_color",
                     "key_border_color",
-                    dp(theme.generalStyle.keyBorder),
-                    dp(theme.generalStyle.roundCorner),
+                    dp(theme.style.keyBorder),
+                    dp(theme.style.roundCorner),
                 )
         }
 
@@ -122,8 +122,8 @@ class SwitchOptionEntryUi(
             scope.decorDrawable(
                 "key_back_color",
                 "key_border_color",
-                ctx.dp(theme.generalStyle.keyBorder),
-                ctx.dp(theme.generalStyle.roundCorner),
+                ctx.dp(theme.style.keyBorder),
+                ctx.dp(theme.style.roundCorner),
             )
         label.setTextColor(scope.colors.keyTextColor)
     }
@@ -147,12 +147,8 @@ class SwitchOptionEntryUi(
 
     private fun getFirstCharacter(s: String): String {
         if (s.isEmpty()) return ""
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val iterator = BreakIterator.getCharacterInstance()
-            iterator.setText(s)
-            s.substring(iterator.first(), iterator.next())
-        } else {
-            s.substring(0, s.offsetByCodePoints(0, 1))
-        }
+        val iterator = BreakIterator.getCharacterInstance()
+        iterator.setText(s)
+        return s.substring(iterator.first(), iterator.next())
     }
 }

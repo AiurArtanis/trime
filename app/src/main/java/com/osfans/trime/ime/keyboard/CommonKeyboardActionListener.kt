@@ -19,9 +19,9 @@ import com.osfans.trime.daemon.RimeSession
 import com.osfans.trime.daemon.launchOnReady
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.theme.ColorManager
-import com.osfans.trime.data.theme.KeyActionManager
-import com.osfans.trime.data.theme.LiquidData
+import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeManager
+import com.osfans.trime.data.theme.model.LiquidKeyboard
 import com.osfans.trime.ime.clipboard.ClipboardWindow
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.dialog.EnabledSchemaPickerDialog
@@ -50,6 +50,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
 
     private val context: ContextThemeWrapper by instance()
     private val service: TrimeInputMethodService by instance()
+    private val theme: Theme by instance()
     private val rime: RimeSession by instance()
     private val windowManager: BoardWindowManager by instance()
     private val keyboardWindow: KeyboardWindow by instance()
@@ -124,10 +125,12 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         service.commitText(action.commit)
                         false
                     }
+
                     text.isNotEmpty() -> {
                         onText(text)
                         false
                     }
+
                     else -> true
                 }
 
@@ -165,6 +168,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
 
                 when (action.command) {
                     "astra_color" -> com.osfans.trime.data.theme.ColorManager.toggleLightDark()
+
                     "astra_symbol" -> service.postRimeJob {
                         val value = com.osfans.trime.data.theme.AstraThemeActions.symbol(action.option, statusCached.isAsciiMode)
                         if (value.isNotEmpty()) {
@@ -172,21 +176,37 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { service.commitText(value) }
                         }
                     }
+
                     "liquid_keyboard" -> handleLiquidKeyboard(arg)
+
                     "menu_keyboard" -> windowManager.attachWindow(SwitchOptionWindow(di))
+
                     "clipboard_window" -> handleClipboardWindow(arg)
+
                     "set_color_scheme" -> handleColorScheme(arg)
+
                     "set_theme" -> handleTheme(arg)
+
                     "broadcast" -> service.sendBroadcast(Intent(arg))
+
                     "clipboard" -> handleClipboard()
+
                     "commit" -> service.commitText(arg)
+
                     "date" -> service.commitText(customFormatDateTime(arg))
+
                     "run" -> handleRunCommand(arg)
+
                     "apply" -> handleApplyCommand(arg)
+
                     "share_text" -> service.shareText()
+
                     "select_candidate" -> handleSelectCandidate(arg)
+
                     "switch_hide_key_symbol" -> switchHideKeySymbol()
+
                     "switch_hide_key_hint" -> switchHideKeyHint()
+
                     else -> handleIntentAction(action.command, arg)
                 }
             }
@@ -197,10 +217,10 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     windowManager.attachWindow(ClipboardWindow(di))
                     return
                 }
-                val liquidTagList = LiquidData.getTagList()
+                val liquidTagList = theme.liquidKeyboard.getTagList()
                 val index = liquidTagList.indexOfFirst { tag ->
                     tag.label == arg || runCatching {
-                        LiquidData.Type.valueOf(arg.uppercase())
+                        LiquidKeyboard.DataType.valueOf(arg.uppercase())
                     }.getOrNull() == tag.type
                 }
 
@@ -218,9 +238,9 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
             }
 
             private fun handleColorScheme(arg: String) {
-                ThemeManager.activeTheme.colorSchemes
-                    .find { it.id == arg }
-                    ?.let { ColorManager.setColorScheme(it) }
+                if (arg in ThemeManager.activeTheme.presetColorSchemes) {
+                    ColorManager.setColorScheme(arg)
+                }
             }
 
             private fun handleTheme(arg: String) {
@@ -257,10 +277,12 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         Timber.i("try to start maintenance via command ...")
                         rime.launchOnReady { api -> api.deploy() }
                     }
+
                     "SYNC_USER_DATA" -> {
                         Timber.i("try to sync rime user data via command ...")
                         rime.launchOnReady { api -> api.syncUserData() }
                     }
+
                     "UPDATE_CONFIG" -> {
                         Timber.i("try to update rime config via command ...")
                         rime.launchOnReady { api ->
@@ -270,6 +292,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                             }
                         }
                     }
+
                     else -> Timber.w("Unknown apply method: $arg")
                 }
             }
@@ -345,8 +368,10 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
 
                 val modifier = when {
                     action.modifier == 0 -> KeyboardWindow.currentKeyboard.modifier
+
                     (action.modifier and KeyEvent.META_CTRL_ON) != 0 && isNavigationKey(action.code) ->
                         action.modifier or KeyboardWindow.currentKeyboard.modifier
+
                     else -> action.modifier
                 }
 
@@ -421,7 +446,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     service.postRimeJob {
                         if (value.run { startsWith('{') && endsWith('}') }) {
                             val token = value.removeSurrounding("{", "}")
-                            onAction(KeyActionManager.getAction(token))
+                            onAction(theme.resolveAction(token))
                         } else if (!value[0].isAsciiPrintable()) {
                             service.commitText(value)
                         } else {

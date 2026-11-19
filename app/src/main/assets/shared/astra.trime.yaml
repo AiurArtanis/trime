@@ -24,7 +24,7 @@ round_corner:
   1: &round1 6 #按键圆角半径
   2: &round2 0 #候选窗口圆角
   3: &round3 12 #回车键圆角
-  
+
 #界面风格、功能开关
 style:
   auto_caps: false #自動句首大寫:true|false
@@ -154,15 +154,15 @@ fallback_colors:
 
 #颜色
 colors:
-  1: &color1 0xff000000 
-  2: &color2 0xffffffff 
-  3: &color3 0xffe1e3e7 
-  4: &color4 0xffacb2c2 
-  5: &color5 0xff131313 
-  6: &color6 0xff3266a0 
-  7: &color7 0x00 
-  8: &color8 0xff838383 
-  
+  1: &color1 0xff000000
+  2: &color2 0xffffffff
+  3: &color3 0xffe1e3e7
+  4: &color4 0xffacb2c2
+  5: &color5 0xff131313
+  6: &color6 0xff3266a0
+  7: &color7 0x00
+  8: &color8 0xff838383
+
 #配色方案
 preset_color_schemes:
   astra_solar:
@@ -985,7 +985,7 @@ preset_color_schemes:
     name: "巴黎遗梦"
     off_key_text_color: 0xffD89C46
     text_color: 0xffFFFFFF
-    
+
   hong:
     author: "风花絮"
     back_color: 0xff353638
@@ -1258,7 +1258,7 @@ preset_keyboards:
   #  height: 48
     ascii_mode: 1
     keys:
-    
+
       - {click: q, long_click: 1, key_back_color: bh1, key_text_color: th1}
       - {click: w, long_click: 2, key_back_color: bh1, key_text_color: th1}
       - {click: e, long_click: 3, key_back_color: bh1, key_text_color: th1}
@@ -1307,7 +1307,7 @@ preset_keyboards:
    # height: 48
     ascii_mode: 1
     keys:
-    
+
       - {click: '{}{Left}', long_click: '【】{Left}', key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
       - {click: 1}
       - {click: 2}
@@ -1403,7 +1403,7 @@ preset_keyboards:
       - {click: 下标, long_click: 上标, key_text_size: "16", symbol_text_size: '8'}
       - {click: 天体, long_click: 星座, key_text_size: "16", symbol_text_size: '8'}
       - {label: '123', click: Keyboard_number, long_click: Schema_switchen, composing: Page_Up, width: 16, key_back_color: bgn, key_text_color: tgn, key_symbol_color: sgn}
-      
+
       - {click: 标点, long_click: 零, key_text_size: "16"}
       - {click: 拼音, long_click: 竖标点, key_text_size: "16", symbol_text_size: '8'}
       - {click: 注音, long_click: 偏旁, key_text_size: "16", symbol_text_size: '8'}
@@ -4201,7 +4201,7 @@ preset_keys:
   Zdic: {label: 漢典, send: FUNCTION, command: run, option: "http://www.zdic.net/sousuo/?q=%1$s"} #搜索網頁: %s或者%1$s爲當前字符
   Zdic2: {label: 漢典, send: FUNCTION, command: run, option: "http://www.zdic.net/sousuo/?q=%2$s"} #搜索網頁: %2$s爲當前輸入的編碼
   WebSearch: {label: 搜索網頁, send: FUNCTION, command: web_search, option: "%4$s"} #搜索，其他view、dial、edit、search等intent，參考安卓的intent文檔：https://developer.android.com/reference/android/content/Intent.html
-  
+
   Left1: {label: '⇦', send: Control+Left, repeatable: true, functional: false}
   Right1: {label: '⇨', send: Control+Right, repeatable: true, functional: false}
   Shift_L2: {label: 选择, preview: '⇪', functional: false, send: Shift_L}
@@ -4235,7 +4235,7 @@ preset_keys:
   Keyboard_h: {label: "丿", send: I}
   Keyboard_r: {label: "丶", send: O}
   Keyboard_e0: {label: "ㄥ", send: E}
-  
+
   Keyboard_a3: {label: "……", functional: false, send: asciicircum}
 
    # 表情键自定义

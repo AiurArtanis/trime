@@ -11,6 +11,10 @@ internal class MaintenanceGate {
 
     suspend fun <T> tryRun(fallback: T, block: suspend () -> T): T {
         if (!mutex.tryLock()) return fallback
-        return try { block() } finally { mutex.unlock() }
+        return try {
+            block()
+        } finally {
+            mutex.unlock()
+        }
     }
 }

@@ -1,13 +1,13 @@
-// SPDX-FileCopyrightText: 2015 - 2024 Rime community
+// SPDX-FileCopyrightText: 2015 - 2026 Rime community
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package com.osfans.trime.provider
 
 import android.content.res.AssetFileDescriptor
+import android.database.Cursor
 import android.database.MatrixCursor
 import android.graphics.Point
-import android.os.Build
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract.Document
@@ -60,36 +60,63 @@ class RimeDataProvider : DocumentsProvider() {
             )
 
         private const val SEARCH_RESULTS_LIMIT = 50
+
+        /**
+         * Resolve the documents root from [externalFilesDir].
+         *
+         * Returns null when the external files dir is not ready yet (for example early after reboot).
+         */
+        internal fun resolveDocumentsRoot(externalFilesDir: File?): Pair<File, String>? {
+            val base = externalFilesDir ?: return null
+            val parentPath = base.parent ?: return null
+            return base to "$parentPath${File.separator}"
+        }
     }
 
-    private lateinit var baseDir: File
-    private lateinit var docIdPrefix: String
-    private lateinit var textFilePaths: Array<String>
+    private var baseDir: File? = null
+    private var docIdPrefix: String? = null
+    private var textFilePaths: Array<String> = emptyArray()
 
     private val File.docId
-        get() = absolutePath.removePrefix(docIdPrefix)
+        get() = absolutePath.removePrefix(docIdPrefix())
 
-    private fun fileFromDocId(docId: String) = File(docIdPrefix, docId)
+    private fun docIdPrefix(): String {
+        if (!ensureBaseDir()) {
+            throw FileNotFoundException("App files dir is not available")
+        }
+        return docIdPrefix!!
+    }
 
-    override fun onCreate(): Boolean {
-        baseDir = context!!.getExternalFilesDir(null) ?: return false
-        docIdPrefix = "${baseDir.parent}${File.separator}"
-        textFilePaths = Array(TEXT_FILES.size) { baseDir.resolve(TEXT_FILES[it]).absolutePath }
+    private fun fileFromDocId(docId: String) = File(docIdPrefix(), docId)
+
+    private fun ensureBaseDir(): Boolean {
+        if (baseDir != null && docIdPrefix != null) return true
+        val (base, prefix) =
+            resolveDocumentsRoot(context!!.getExternalFilesDir(null)) ?: return false
+        baseDir = base
+        docIdPrefix = prefix
+        textFilePaths = Array(TEXT_FILES.size) { base.resolve(TEXT_FILES[it]).absolutePath }
         return true
     }
 
-    override fun queryRoots(projection: Array<String>?) = MatrixCursor(projection ?: DEFAULT_ROOT_PROJECTION).apply {
-        newRow().apply {
-            add(Root.COLUMN_ROOT_ID, baseDir.docId)
+    override fun onCreate(): Boolean = true
+
+    override fun queryRoots(projection: Array<String>?): Cursor {
+        val cursor = MatrixCursor(projection ?: DEFAULT_ROOT_PROJECTION)
+        if (!ensureBaseDir()) return cursor
+        val root = baseDir!!
+        cursor.newRow().apply {
+            add(Root.COLUMN_ROOT_ID, root.docId)
             add(
                 Root.COLUMN_FLAGS,
                 Root.FLAG_SUPPORTS_CREATE or Root.FLAG_LOCAL_ONLY or Root.FLAG_SUPPORTS_SEARCH or Root.FLAG_SUPPORTS_IS_CHILD,
             )
             add(Root.COLUMN_ICON, R.mipmap.ic_app_icon)
             add(Root.COLUMN_TITLE, context!!.getString(R.string.trime_app_name))
-            add(Root.COLUMN_DOCUMENT_ID, baseDir.docId)
+            add(Root.COLUMN_DOCUMENT_ID, root.docId)
             add(Root.COLUMN_MIME_TYPES, MIME_TYPE_WILDCARD)
         }
+        return cursor
     }
 
     override fun queryDocument(
@@ -269,8 +296,7 @@ class RimeDataProvider : DocumentsProvider() {
         }
 
         val mimeType = file.mimeType
-        var flags =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) Document.FLAG_SUPPORTS_COPY else 0
+        var flags = Document.FLAG_SUPPORTS_COPY
         if (file.canWrite()) {
             flags = flags or
                 if (file.isDirectory) {
@@ -283,9 +309,7 @@ class RimeDataProvider : DocumentsProvider() {
             flags = flags or
                 Document.FLAG_SUPPORTS_DELETE or
                 Document.FLAG_SUPPORTS_RENAME
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                flags = flags or Document.FLAG_SUPPORTS_MOVE
-            }
+            flags = flags or Document.FLAG_SUPPORTS_MOVE
         }
         if (mimeType.startsWith("image/")) {
             flags = flags or Document.FLAG_SUPPORTS_THUMBNAIL

@@ -8,9 +8,8 @@ package com.osfans.trime.ui.setup
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import com.osfans.trime.R
-import com.osfans.trime.data.sync.RimeDataSync
+import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.util.InputMethodUtils
-import com.osfans.trime.util.appContext
 
 enum class SetupPage {
     Mode,
@@ -44,19 +43,19 @@ enum class SetupPage {
 
     fun getButtonAction(activity: FragmentActivity) {
         when (this) {
-            Mode -> (activity as SetupActivity).launchDataPathPicker()
+            Mode -> (activity as SetupActivity).pickDataPath()
             Enable -> InputMethodUtils.showImeEnablerActivity(activity)
             Select -> InputMethodUtils.showImePicker()
         }
     }
 
     fun showActionButton(): Boolean = when (this) {
-        Mode -> RimeDataSync.usesExternalSync()
+        Mode -> UserDataManager.useExternalSync()
         else -> true
     }
 
     fun isDone() = when (this) {
-        Mode -> RimeDataSync.isStorageAvailable(appContext)
+        Mode -> UserDataManager.isStorageChoiceDone()
         Enable -> InputMethodUtils.checkIsTrimeEnabled()
         Select -> InputMethodUtils.checkIsTrimeSelected()
     }

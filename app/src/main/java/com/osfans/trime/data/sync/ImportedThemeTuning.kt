@@ -10,8 +10,12 @@ import java.io.File
 /** Retire Astra 1-3's modifications to Standard; Astra now has its own source. */
 object ImportedThemeTuning {
     private val keys = listOf(
-        "candidate_text_size", "candidate_spacing", "candidate_text_size_by_length_portrait",
-        "vertical_gap", "keyboard_height", "keyboard_height_land",
+        "candidate_text_size",
+        "candidate_spacing",
+        "candidate_text_size_by_length_portrait",
+        "vertical_gap",
+        "keyboard_height",
+        "keyboard_height_land",
     )
 
     fun apply(context: Context, staging: File) {

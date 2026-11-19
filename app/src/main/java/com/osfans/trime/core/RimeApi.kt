@@ -24,8 +24,11 @@ interface RimeApi {
 
     suspend fun isEmpty(): Boolean
 
-    suspend fun deploy(skipImport: Boolean = false)
+    suspend fun deploy()
+
     suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit = {})
+
+    suspend fun toggleRuntimeOption(option: String)
 
     suspend fun updateConfig()
 
@@ -81,8 +84,6 @@ interface RimeApi {
     )
 
     suspend fun getRuntimeOption(option: String): Boolean
-
-    suspend fun toggleRuntimeOption(option: String)
 
     suspend fun setNullInputType(value: Boolean)
 

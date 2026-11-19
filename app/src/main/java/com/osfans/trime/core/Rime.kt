@@ -6,13 +6,11 @@
 package com.osfans.trime.core
 
 import com.osfans.trime.BuildConfig
-import com.osfans.trime.data.base.DataManager
+import com.osfans.trime.core.data.DataManager
+import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.opencc.OpenCCDictManager
 import com.osfans.trime.data.prefs.AppPrefs
-import com.osfans.trime.data.sync.ExternalSyncFallback
-import com.osfans.trime.data.sync.RimeDataSync
 import com.osfans.trime.ime.core.InlinePreeditMode
-import com.osfans.trime.util.appContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,9 +19,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import timber.log.Timber
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Rime JNI and instance methods
@@ -70,6 +72,10 @@ class Rime :
             },
         )
 
+    private val lock = Mutex()
+    private val maintenanceGate = MaintenanceGate()
+    private val optionsCached = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     private val inlinePreeditMode by AppPrefs.defaultInstance().general.inlinePreeditMode
     private val showAsciiSwitchTips by AppPrefs.defaultInstance().general.asciiSwitchTips
 
@@ -77,8 +83,6 @@ class Rime :
     private var isNullInputType = true
     private var lastAsciiTipsText = ""
     private var pagingMode = false
-    private val maintenanceGate = MaintenanceGate()
-    private val optionsCached = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
     init {
         if (lifecycle.currentState != RimeLifecycle.State.STOPPED) {
@@ -86,7 +90,7 @@ class Rime :
         }
     }
 
-    private suspend fun <T> withRimeContext(block: suspend () -> T): T = maintenanceGate.run {
+    private suspend inline fun <T> withRimeContext(crossinline block: suspend () -> T): T = maintenanceGate.run {
         withContext(dispatcher) { block() }
     }
 
@@ -94,133 +98,94 @@ class Rime :
         getCurrentRimeSchema() == ".default" // 無方案
     }
 
-    override suspend fun deploy(skipImport: Boolean) = deployConfiguration(skipImport, {}, {})
+    override suspend fun deploy() = deployConfiguration(true, {}, {}, {})
 
-    override suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = deployConfiguration(true, install, rollback, prepare)
+    override suspend fun replaceConfiguration(install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = deployConfiguration(false, install, rollback, prepare)
 
-    private suspend fun deployConfiguration(skipImport: Boolean, install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit = {}) = RimeMaintenanceMutex.withLock {
+    private suspend fun deployConfiguration(sync: Boolean, install: () -> Unit, rollback: () -> Unit, prepare: () -> Unit) = lock.withLock {
         maintenanceGate.run {
-            if (RimeDataSync.usesExternalSync()) {
-                if (!RimeDataSync.hasExternalAccess(appContext)) {
-                    ExternalSyncFallback.fallbackToAppStorage(appContext)
-                }
-            }
-            val deployFinished = CompletableDeferred<Boolean>()
-            val deployHandler: (RimeMessage<*>) -> Unit = { message ->
+            check(!com.osfans.trime.TrimeApplication.getInstance().isDirectBootMode) { "Unlock the device before changing configuration" }
+            val finished = CompletableDeferred<Boolean>()
+            val handler: (RimeMessage<*>) -> Unit = { message ->
                 if (message is RimeMessage.DeployMessage) {
                     when (message.data) {
-                        RimeMessage.DeployMessage.State.Start -> Unit
-                        RimeMessage.DeployMessage.State.Success -> {
-                            deployFinished.complete(true)
-                        }
-                        RimeMessage.DeployMessage.State.Failure -> {
-                            deployFinished.complete(false)
-                        }
+                        RimeMessage.DeployMessage.State.Success -> finished.complete(true)
+                        RimeMessage.DeployMessage.State.Failure -> finished.complete(false)
+                        else -> Unit
                     }
                 }
             }
             try {
                 MaintenanceDiagnostics.record("deploy.prepare")
-                // SAF providers can be slow; keep their I/O off the native dispatcher.
-                withContext(Dispatchers.IO) { prepare() }
                 withContext(dispatcher) { exitRime() }
-                MaintenanceDiagnostics.record("deploy.stopped")
-                if (RimeDataSync.usesExternalSync() && !skipImport) {
-                    RimeDataSync.importToLocal(appContext, showProgress = false).getOrThrow()
-                }
-                withContext(dispatcher) {
+                if (sync) check(UserDataManager.sync()) { "User data sync failed" }
+                withContext(Dispatchers.IO) {
+                    prepare()
                     install()
-                    registerRimeMessageHandler(deployHandler)
-                    startRime(true)
                 }
-                // startupRime joins the worker, so missing completion is a protocol
-                // error, not a reason to wait another five minutes.
-                check(deployFinished.isCompleted) { "Rime deploy returned without completion" }
-                val success = deployFinished.await()
-                check(success) { "Rime deploy failed" }
+                registerRimeMessageHandler(handler)
+                withContext(dispatcher) { startRime(true) }
+                check(withTimeout(5.minutes) { finished.await() }) { "Rime deploy failed" }
                 withContext(dispatcher) { emitResponse() }
                 MaintenanceDiagnostics.record("deploy.completed")
             } catch (e: Exception) {
                 MaintenanceDiagnostics.record("deploy.recovery", e.javaClass.simpleName)
                 withContext(kotlinx.coroutines.NonCancellable) {
                     withContext(dispatcher) { exitRime() }
-                    withContext(Dispatchers.IO) {
+                    try {
+                        withContext(Dispatchers.IO) { rollback() }
+                    } catch (recovery: Exception) {
+                        e.addSuppressed(recovery)
+                    } finally {
                         try {
-                            rollback()
-                        } catch (recovery: Exception) {
-                            e.addSuppressed(recovery)
-                        } finally {
-                            try {
-                                withContext(dispatcher) { startRime(false) }
-                            } catch (restart: Exception) {
-                                e.addSuppressed(restart)
-                            }
+                            withContext(dispatcher) { startRime(false) }
+                        } catch (restart: Exception) {
+                            e.addSuppressed(restart)
                         }
                     }
                 }
                 throw e
             } finally {
-                unregisterRimeMessageHandler(deployHandler)
+                unregisterRimeMessageHandler(handler)
             }
         }
     }
 
-    override suspend fun updateConfig() = RimeMaintenanceMutex.withLock {
-        withRimeContext {
-            exitRime()
-            startRime(false)
+    override suspend fun updateConfig() = withRimeContext {
+        exitRime()
+        startRime(false)
+    }
+
+    // Never mirror a live native user database. Keep the upstream two-way sync engine.
+    private suspend fun syncStopped(): Boolean {
+        withContext(dispatcher) { exitRime() }
+        return try {
+            UserDataManager.sync()
+        } finally {
+            withContext(kotlinx.coroutines.NonCancellable + dispatcher) { startRime(false) }
         }
     }
 
-    override suspend fun syncUserData(): Boolean = RimeMaintenanceMutex.withLock {
+    override suspend fun syncUserData(): Boolean = lock.withLock {
         maintenanceGate.run {
-            // Keep the local user data dir a fresh copy of the external tree before
-            // syncing. The first sync also migrates the user databases (imported
-            // once, never synced afterwards, see UserDbMigration); every subsequent
-            // sync imports incrementally (SyncIndex) before the rime maintenance
-            // runs. The import progress notification is suppressed so syncing does
-            // not show a deploy notification.
-            if (RimeDataSync.usesExternalSync() && RimeDataSync.hasExternalAccess(appContext)) {
-                withContext(dispatcher) { exitRime() }
-                try {
-                    RimeDataSync.importToLocal(appContext, showProgress = false).getOrThrow()
-                } finally {
-                    withContext(kotlinx.coroutines.NonCancellable + dispatcher) { startRime(false) }
-                }
-            }
-            // RimeSyncUserData schedules maintenance asynchronously and returns once the
-            // worker is started. Wait for DeployMessage so callers (e.g. export) only
-            // proceed after sync/<installation_id>/ has been written.
-            val syncFinished = CompletableDeferred<Boolean>()
-            val syncHandler: (RimeMessage<*>) -> Unit = { message ->
+            if (!syncStopped()) return@run false
+            val finished = CompletableDeferred<Boolean>()
+            val handler: (RimeMessage<*>) -> Unit = { message ->
                 if (message is RimeMessage.DeployMessage) {
                     when (message.data) {
-                        RimeMessage.DeployMessage.State.Success -> syncFinished.complete(true)
-                        RimeMessage.DeployMessage.State.Failure -> syncFinished.complete(false)
-                        else -> {}
+                        RimeMessage.DeployMessage.State.Success -> finished.complete(true)
+                        RimeMessage.DeployMessage.State.Failure -> finished.complete(false)
+                        else -> Unit
                     }
                 }
             }
-            registerRimeMessageHandler(syncHandler)
-            val syncOk =
-                try {
-                    val started = withContext(dispatcher) { syncRimeUserData() }
-                    if (!started) {
-                        false
-                    } else {
-                        check(syncFinished.isCompleted) { "Rime sync returned without completion" }
-                        syncFinished.await()
-                    }
-                } finally {
-                    unregisterRimeMessageHandler(syncHandler)
-                }
-            if (!syncOk) return@run false
-            if (!RimeDataSync.usesExternalSync()) return@run true
-            if (!RimeDataSync.hasExternalAccess(appContext)) {
-                Timber.w("Export skipped: no data path selected")
-                return@run false
+            registerRimeMessageHandler(handler)
+            try {
+                val started = withContext(dispatcher) { syncRimeUserData() }
+                started && withTimeout(5.minutes) { finished.await() } && syncStopped()
+            } finally {
+                unregisterRimeMessageHandler(handler)
             }
-            RimeDataSync.exportToExternal(appContext).isSuccess
         }
     }
 
@@ -308,20 +273,19 @@ class Rime :
         setRimeOption(option, value)
     }
 
-    override suspend fun toggleRuntimeOption(option: String) = withRimeContext {
-        // Read and write in one engine operation; UI caches are only for labels.
-        setRimeOption(option, !getRimeOption(option))
-        emitResponse()
-    }
-
     override suspend fun getRuntimeOption(option: String): Boolean {
-        // Keyboard labels call this synchronously on the UI thread. Never make
-        // drawing wait for dictionary compilation or suspended SAF I/O.
         val cached = optionsCached[option] ?: if (option == "ascii_mode") statusCached.isAsciiMode else false
         if (!isReady) return cached
         return maintenanceGate.tryRun(cached) {
             withContext(dispatcher) { getRimeOption(option).also { optionsCached[option] = it } }
         }
+    }
+
+    override suspend fun toggleRuntimeOption(option: String) = withRimeContext {
+        val target = !getRimeOption(option)
+        setRimeOption(option, target)
+        optionsCached[option] = target
+        emitResponse()
     }
 
     override suspend fun setNullInputType(value: Boolean) = withRimeContext {
@@ -341,10 +305,10 @@ class Rime :
     }
 
     private fun startRime(fullCheck: Boolean) {
-        MaintenanceDiagnostics.record(if (fullCheck) "startup.full.begin" else "startup.begin")
         DataManager.sync()
+        UserDataManager.ensureDefaultCustomConfig()
         val sharedDataDir = DataManager.sharedDataDir.absolutePath
-        val userDataDir = DataManager.userDataDir.absolutePath
+        val userDataDir = UserDataManager.userDataDir.absolutePath
         Timber.d(
             """
             Starting rime with:
@@ -353,8 +317,12 @@ class Rime :
             fullCheck: $fullCheck
             """.trimIndent(),
         )
-        startupRime(sharedDataDir, userDataDir, BuildConfig.BUILD_VERSION_NAME, fullCheck)
-        MaintenanceDiagnostics.record("startup.joined")
+        startupRime(
+            sharedDataDir,
+            userDataDir,
+            BuildConfig.BUILD_VERSION_NAME,
+            fullCheck,
+        )
     }
 
     private fun processKeyInner(value: Int, modifiers: Int, isVirtual: Boolean): Boolean {
@@ -372,8 +340,10 @@ class Rime :
 
     private fun asciiTipsText(status: StatusProto): String = when {
         status.isAsciiMode -> "En"
+
         status.schemaName.isNotEmpty() && !status.schemaName.startsWith('.') ->
             status.schemaName.take(2)
+
         else -> ""
     }
 
@@ -417,8 +387,8 @@ class Rime :
                 statusCached = getRimeStatus()
                 schemaCached = RimeSchema(it.data.id)
             }
+
             is RimeMessage.OptionMessage -> {
-                optionsCached[it.data.option] = it.data.value
                 // Option change won't trigger response update
                 val status = getRimeStatus()
                 statusCached = status
@@ -427,27 +397,33 @@ class Rime :
                     showAsciiSwitchTips(status)
                 }
             }
+
             is RimeMessage.DeployMessage -> {
                 if (it.data == RimeMessage.DeployMessage.State.Start) {
                     OpenCCDictManager.buildOpenCCDict()
                 }
             }
+
             is RimeMessage.CompositionMessage -> {
                 val composition = it.data
                 compositionCached = composition
             }
+
             is RimeMessage.PagedCandidatesMessage -> {
                 val paged = it.data
                 paging = paged.hasPrevPage
                 hasMenu = paged.candidates.isNotEmpty()
             }
+
             is RimeMessage.BulkCandidatesMessage -> {
                 hasMenu = it.data.candidates.isNotEmpty()
             }
+
             is RimeMessage.StatusMessage -> {
                 statusCached = it.data
                 updateSchemaCached(it.data)
             }
+
             else -> {}
         }
     }
@@ -479,23 +455,34 @@ class Rime :
         asciiSwitchTipsJob?.cancel()
         asciiSwitchTipsJob = lifecycleScope.launch {
             delay(1000L)
-            val ctx = withRimeContext { getRimeContext() }
-            handleRimeMessage(6, arrayOf(ctx.composition))
+            withRimeContext {
+                val ctx = getRimeContext()
+                handleRimeMessage(6, arrayOf(ctx.composition))
+            }
         }
     }
 
-    fun startup() {
-        if (!RimeDataSync.isStorageAvailable(appContext)) {
-            Timber.w("Skip starting rime: storage not available!")
-            return
+    /**
+     * Start the native Rime dispatcher when storage is ready and the lifecycle is stopped.
+     *
+     * @return true when startup was accepted; false when storage is unavailable or the
+     * lifecycle was not stopped.
+     */
+    fun startup(): Boolean {
+        if (!UserDataManager.isStorageAvailable()) {
+            Timber.w(
+                "Skip starting rime: storage not available! (${UserDataManager.storageStateDescription()})",
+            )
+            return false
         }
         if (lifecycle.currentState != RimeLifecycle.State.STOPPED) {
             Timber.w("Skip starting rime: not at stopped state!")
-            return
+            return false
         }
         registerRimeMessageHandler(::handleRimeMessage)
         lifecycleRegistry.emitEvent(RimeLifecycle.Event.ON_START)
         dispatcher.start()
+        return true
     }
 
     fun finalize() {
@@ -522,7 +509,8 @@ class Rime :
             )
 
         private val rimeMessageHandlers = CopyOnWriteArrayList<(RimeMessage<*>) -> Unit>()
-        // Maintenance events must survive input bursts and a late subscriber.
+
+        // Maintenance notifications must survive input bursts and a late subscriber.
         internal val deploymentEvents = kotlinx.coroutines.channels.Channel<RimeMessage.DeployMessage>(
             kotlinx.coroutines.channels.Channel.UNLIMITED,
         )

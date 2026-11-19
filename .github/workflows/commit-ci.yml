@@ -3,12 +3,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 name: Commit
-on: [push]
+on:
+  push:
+    branches:
+      - '**'
 
 env:
   CI_NAME: Commit CI
 jobs:
+  check:
+    uses: ./.github/workflows/check-ci.yml
+
   build:
+    needs: check
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -44,15 +51,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-
-      - name: Install Android NDK
-        run: |
-          sdkmanager --install "cmake;3.31.6"
-
-      - name: Check code style
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: |
-          make style-lint
+        with:
+          packages: 'platform-tools cmake;4.1.2'
 
       - name: Calculate JNI cache hash
         id: cache-hash
@@ -65,11 +65,6 @@ jobs:
         with:
           path: "app/prebuilt"
           key: ${{ matrix.os }}-trime-jni-debug-${{ steps.cache-hash.outputs.native-cache-hash }}
-
-      - name: Fetch submodules
-        if: ${{ !steps.jni-cache.outputs.cache-hit }}
-        run: |
-          git submodule update --init --recursive
 
       - name: Build debug Trime
         run: |

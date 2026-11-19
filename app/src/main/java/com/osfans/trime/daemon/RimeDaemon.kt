@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2015 - 2024 Rime community
+// SPDX-FileCopyrightText: 2015 - 2026 Rime community
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -13,6 +13,7 @@ import com.osfans.trime.core.Rime
 import com.osfans.trime.core.RimeApi
 import com.osfans.trime.core.RimeLifecycle
 import com.osfans.trime.core.RimeMessage
+import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.core.lifecycleScope
 import com.osfans.trime.core.whenReady
 import com.osfans.trime.ui.main.LogActivity
@@ -22,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import splitties.systemservices.notificationManager
+import timber.log.Timber
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -77,12 +79,46 @@ object RimeDaemon {
             get() = realRime.lifecycle.lifecycleScope
     }
 
+    private fun tryStartRimeLocked(): Boolean {
+        if (realRime.lifecycle.currentState != RimeLifecycle.State.STOPPED) {
+            return true
+        }
+        return realRime.startup()
+    }
+
+    /**
+     * Start Rime if a previous attempt was refused because its preconditions were not
+     * met. [Rime.startup] only fails on a precondition (storage unavailable, or not
+     * stopped), so callers should invoke this whenever such a precondition may have
+     * changed: after the user grants access to a data directory, and when a new input
+     * session starts. Startup is refused right after a reboot, when the SAF grant and
+     * emulated external storage are not reachable before the first unlock; this covers
+     * that case without keeping a retry timer alive.
+     *
+     * @return true when rime is starting or already usable, false when startup was
+     * refused again (then nothing is running and a later call may still succeed).
+     */
+    fun ensureRimeStarted(): Boolean = lock.withLock {
+        if (realRime.lifecycle.currentState != RimeLifecycle.State.STOPPED) {
+            return@withLock true
+        }
+        if (sessions.isEmpty()) {
+            return@withLock false
+        }
+        tryStartRimeLocked().also {
+            if (it) Timber.i("Rime started on demand")
+        }
+    }
+
     fun createSession(name: String): RimeSession = lock.withLock {
         if (name in sessions) {
             return@withLock sessions.getValue(name)
         }
         if (realRime.lifecycle.currentState == RimeLifecycle.State.STOPPED) {
-            realRime.startup()
+            Timber.d("RimeDaemon start rime")
+            if (!realRime.startup()) {
+                Timber.w("Rime startup refused; retrying when an input session starts")
+            }
         }
         val session = establish(name)
         sessions[name] = session
@@ -95,6 +131,7 @@ object RimeDaemon {
         }
         sessions -= name
         if (sessions.isEmpty()) {
+            Timber.d("RimeDaemon stop rime")
             realRime.finalize()
         }
     }
@@ -159,15 +196,21 @@ object RimeDaemon {
         }
     }
 
+    fun stopRime() {
+        realRime.finalize()
+    }
+
     private suspend fun handleRimeMessage(it: RimeMessage<*>) {
         if (it is RimeMessage.DeployMessage) {
             when (it.data) {
                 RimeMessage.DeployMessage.State.Start -> {
                     DeployNotification.showProgress()
                 }
+
                 RimeMessage.DeployMessage.State.Success -> {
                     DeployNotification.showSuccess()
                 }
+
                 RimeMessage.DeployMessage.State.Failure -> {
                     val intent =
                         Intent(appContext, LogActivity::class.java).apply {

@@ -18,15 +18,15 @@ plugins {
 
 android {
     namespace = "com.osfans.trime"
-    compileSdk = 36
-    buildToolsVersion = "36.0.0"
+    compileSdk = 37
+    buildToolsVersion = "37.0.0"
 
     defaultConfig {
         applicationId = "com.osfans.trime"
-        minSdk = 21
-        targetSdk = 36
-        versionCode = 20270102
-        versionName = "3.3.13"
+        minSdk = 26
+        targetSdk = 37
+        versionCode = 20270101
+        versionName = "3.3.14"
 
         multiDexEnabled = true
         buildConfigField("String", "BUILDER", "\"${project.builder}\"")
@@ -84,11 +84,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // hack workaround lint gradle 8.0.2
-    lint {
-        checkReleaseBuilds = false
-    }
-
     testOptions {
         unitTests.all {
             it.useJUnitPlatform()
@@ -133,6 +128,7 @@ ksp {
 }
 
 dependencies {
+    implementation("org.yaml:snakeyaml:2.6") // Legacy configuration import only.
     ksp(project(":codegen"))
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization.json)
@@ -140,7 +136,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.autofill)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.paging.runtime.ktx)
@@ -157,7 +153,8 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.xxpermissions)
     implementation(libs.kodein.di)
-    implementation(libs.snakeyaml)
+    implementation(libs.kaml)
+    implementation(libs.storageaccess)
     implementation(libs.splitties.bitflags)
     implementation(libs.splitties.systemservices)
     implementation(libs.splitties.views.dsl)

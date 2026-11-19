@@ -15,8 +15,6 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.isVisible
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
-import com.osfans.trime.data.theme.FontManager
-import com.osfans.trime.data.theme.KeyActionManager
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeScope
 import com.osfans.trime.ime.core.AutoScaleTextView
@@ -66,14 +64,16 @@ class PopupKeyboardUi(
     private val labels: List<String>,
 ) : PopupContainerUi(ctx, scope, outerBounds, triggerBounds, onDismissSelf) {
 
-    class PopupKeyUi(override val ctx: Context, private val scope: ThemeScope, val text: String) : Ui {
-        private val theme: Theme get() = scope.theme
+    val theme: Theme get() = scope.theme
+
+    inner class PopupKeyUi(val text: String) : Ui {
+        override val ctx: Context = this@PopupKeyboardUi.ctx
 
         val textView = view(::AutoScaleTextView) {
             scaleMode = AutoScaleTextView.Mode.Proportional
-            textSize = theme.generalStyle.popupTextSize
+            textSize = theme.style.popupTextSize
             setTextColor(scope.colors.popupTextColor)
-            typeface = FontManager.getTypeface("POPUP_FONT")
+            typeface = theme.fonts.popup
         }
 
         val imageView = view(::AppCompatImageView) {}
@@ -97,7 +97,7 @@ class PopupKeyboardUi(
             if (text.isIconFont) {
                 imageView.setImageDrawable(
                     IconicsDrawable(ctx, text.toIconName()).apply {
-                        sizeDp = theme.generalStyle.popupTextSize.toInt()
+                        sizeDp = theme.style.popupTextSize.toInt()
                         colorFilter = PorterDuffColorFilter(scope.colors.popupTextColor, PorterDuff.Mode.SRC_IN)
                     },
                 )
@@ -195,10 +195,10 @@ class PopupKeyboardUi(
             if (label.length == 1 && label[0].code < 128) {
                 label
             } else {
-                KeyActionManager.getAction(label).getLabel(KeyboardWindow.currentKeyboard)
+                theme.resolveAction(label).getLabel(KeyboardWindow.currentKeyboard)
             }
 
-        PopupKeyUi(ctx, scope, displayLabel)
+        PopupKeyUi(displayLabel)
     }
 
     init {

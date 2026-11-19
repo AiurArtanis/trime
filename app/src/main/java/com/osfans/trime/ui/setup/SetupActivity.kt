@@ -27,7 +27,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.osfans.trime.R
-import com.osfans.trime.data.sync.RimeDataSync
+import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.databinding.ActivitySetupBinding
 import com.osfans.trime.ui.main.MainActivity
 import com.osfans.trime.ui.setup.SetupPage.Companion.firstUndonePage
@@ -36,6 +36,7 @@ import com.osfans.trime.util.appContext
 import com.osfans.trime.util.createNotificationChannel
 import com.osfans.trime.util.startActivity
 import com.osfans.trime.util.toast
+import io.github.whiredplanck.storageaccess.StorageAccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -110,11 +111,11 @@ class SetupActivity : FragmentActivity() {
                 )
                 val install = com.osfans.trime.data.sync.ConfigurationInstall(
                     directory,
-                    com.osfans.trime.data.base.DataManager.userDataDir,
+                    com.osfans.trime.core.data.DataManager.userDataDir,
                     java.io.File(ctx.getExternalFilesDir(null), "backups/original-${System.currentTimeMillis()}.bak"),
                 )
                 // Bootstrap from app storage before committing the first external tree.
-                mode.setValue(com.osfans.trime.data.sync.DataStorageMode.APP_STORAGE)
+                mode.setValue(com.osfans.trime.core.data.DataStorageMode.APP_STORAGE)
                 val session = com.osfans.trime.daemon.RimeDaemon.createSession(sessionName)
                 sessionCreated = true
                 run {
@@ -135,9 +136,9 @@ class SetupActivity : FragmentActivity() {
                         )
                     }
                 }
-                RimeDataSync.persistTreeUri(ctx, destination)
+                UserDataManager.persistTreeUri(destination)
                 com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.dataStorageMode
-                    .setValue(com.osfans.trime.data.sync.DataStorageMode.EXTERNAL_SYNC)
+                    .setValue(com.osfans.trime.core.data.DataStorageMode.EXTERNAL_SYNC)
                 completed = true
                 toast(R.string.done)
                 if (!isDestroyed) {
@@ -163,36 +164,26 @@ class SetupActivity : FragmentActivity() {
     private lateinit var prevButton: Button
     private lateinit var nextButton: Button
 
-    private val dataPathPicker =
-        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-            if (uri == null) return@registerForActivityResult
-            lifecycleScope.launch {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        RimeDataSync.persistTreeUri(this@SetupActivity, uri)
-                        val name = "setup-import-${java.util.UUID.randomUUID()}"
-                        val session = com.osfans.trime.daemon.RimeDaemon.createSession(name)
-                        try {
-                            session.runOnReady { deploy() }
-                        } finally {
-                            com.osfans.trime.daemon.RimeDaemon.destroySession(name)
-                        }
-                    }
-                    refreshCurrentFragment()
-                    toast(R.string.setup__data_path_imported)
-                    skipButton.visibility = View.VISIBLE
-                }.onFailure {
-                    withContext(Dispatchers.IO) {
-                        RimeDataSync.clearExternalTree(this@SetupActivity)
-                    }
-                    refreshCurrentFragment()
-                    toast(R.string.setup__data_path_import_failed)
-                }
+    private val storageAccess = StorageAccess(this)
+
+    fun pickDataPath() {
+        lifecycleScope.launch {
+            val picked = storageAccess.pickDirectory() ?: return@launch
+            runCatching {
+                UserDataManager.persistTreeUri(picked.uri)
+                check(com.osfans.trime.daemon.syncUserDataSafely())
+                refreshCurrentFragment()
+                updateButtons()
+                toast(R.string.setup__data_path_imported)
+                skipButton.visibility = View.VISIBLE
+            }.onFailure {
+                // Keep the picked folder: the user is not forced to pick again, and a folder that
+                // keeps failing makes the deploy path fall back to app-specific storage on its own.
+                refreshCurrentFragment()
+                updateButtons()
+                toast(R.string.setup__data_path_import_failed)
             }
         }
-
-    fun launchDataPathPicker() {
-        dataPathPicker.launch(null as Uri?)
     }
 
     fun refreshCurrentFragment() {
@@ -216,6 +207,21 @@ class SetupActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                originalImportRunning.collect { running ->
+                    if (running && importProgress == null) {
+                        importProgress = AlertDialog.Builder(this@SetupActivity)
+                            .setMessage(R.string.configuration_working).setCancelable(false).show()
+                    } else if (!running) {
+                        importProgress?.dismiss()
+                        importProgress = null
+                        refreshCurrentFragment()
+                        updateButtons()
+                    }
+                }
+            }
+        }
         originalSource = savedInstanceState?.getString("original_source")?.let(Uri::parse)
         enableEdgeToEdge()
         val binding = ActivitySetupBinding.inflate(layoutInflater)
@@ -267,21 +273,6 @@ class SetupActivity : FragmentActivity() {
         // Skip to undone page
         firstUndonePage()?.let { viewPager.currentItem = it.ordinal }
         updateButtons()
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                originalImportRunning.collect { running ->
-                    if (running && importProgress == null) {
-                        importProgress = AlertDialog.Builder(this@SetupActivity)
-                            .setMessage(R.string.configuration_working).setCancelable(false).show()
-                    } else if (!running) {
-                        importProgress?.dismiss()
-                        importProgress = null
-                        refreshCurrentFragment()
-                        updateButtons()
-                    }
-                }
-            }
-        }
         shown = true
         createNotificationChannel(
             CHANNEL_ID,
@@ -302,12 +293,6 @@ class SetupActivity : FragmentActivity() {
         nextButton.text = getString(if (isLastPage) R.string.done else R.string.setup__next)
         nextButton.isGone = isLastPage && !allDone
         nextButton.isEnabled = modeSetupDone
-    }
-
-    override fun onDestroy() {
-        importProgress?.dismiss()
-        importProgress = null
-        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

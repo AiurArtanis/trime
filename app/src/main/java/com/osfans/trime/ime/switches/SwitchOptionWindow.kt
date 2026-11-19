@@ -111,6 +111,7 @@ class SwitchOptionWindow(di: DI) :
                 when (entry) {
                     is SwitchOptionEntry.Static -> when (entry.type) {
                         SwitchOptionEntry.Static.Type.UpdateRimeIce -> com.osfans.trime.data.sync.RimeIceUpdate.start(context)
+
                         SwitchOptionEntry.Static.Type.SchemaList -> showDialog { r ->
                             EnabledSchemaPickerDialog.build(r, service.lifecycleScope, context) {
                                 setNegativeButton(R.string.enable_schemata) { _, _ ->
@@ -118,19 +119,23 @@ class SwitchOptionWindow(di: DI) :
                                 }
                             }
                         }
+
                         SwitchOptionEntry.Static.Type.UpdateConfig -> rime.launchOnReady { r ->
                             r.updateConfig()
                             service.lifecycleScope.launch {
                                 Toast.makeText(service, R.string.done, Toast.LENGTH_SHORT).show()
                             }
                         }
+
                         SwitchOptionEntry.Static.Type.Keyboard -> AppUtils.launchMainToKeyboard(context)
+
                         SwitchOptionEntry.Static.Type.ThemeList -> showDialog { r ->
                             ThemePickerDialog.build(service.lifecycleScope, context) {
                                 r.commitComposition()
                             }
                         }
                     }
+
                     is SwitchOptionEntry.Custom -> {
                         val options = entry.switch.options
                         if (options.isEmpty()) {
@@ -209,7 +214,7 @@ class SwitchOptionWindow(di: DI) :
 
     private val barExternalView by lazy {
         context.constraintLayout {
-            val size = dp(theme.generalStyle.run { candidateViewHeight + commentHeight })
+            val size = dp(theme.style.run { candidateViewHeight + commentHeight })
             add(
                 settingsButton,
                 lParams(size, size) {

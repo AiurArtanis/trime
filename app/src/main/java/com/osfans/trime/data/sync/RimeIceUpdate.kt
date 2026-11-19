@@ -4,8 +4,8 @@ import android.content.Context
 import android.widget.Toast
 import com.osfans.trime.R
 import com.osfans.trime.TrimeApplication
+import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.daemon.RimeDaemon
-import com.osfans.trime.data.base.DataManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
@@ -50,9 +50,9 @@ object RimeIceUpdate {
                     DataManager.userDataDir,
                     File(ctx.getExternalFilesDir(null), "backups/ice-${System.currentTimeMillis()}.bak"),
                 )
-                val external = if (RimeDataSync.usesExternalSync(ctx)) {
-                    check(RimeDataSync.hasExternalAccess(ctx)) { "Storage permission is missing" }
-                    ExternalConfigurationInstall(ctx, RimeDataSync.treeUri()!!, staging, work.resolve("external-before"))
+                val external = if (com.osfans.trime.core.data.UserDataManager.useExternalSync()) {
+                    check(com.osfans.trime.core.data.UserDataManager.hasExternalAccess()) { "Storage permission is missing" }
+                    ExternalConfigurationInstall(ctx, android.net.Uri.parse(com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.externalRimeTreeUri.getValue()), staging, work.resolve("external-before"))
                 } else {
                     null
                 }
@@ -76,7 +76,7 @@ object RimeIceUpdate {
                         },
                     )
                 }
-                SyncIndex.clear()
+                com.osfans.trime.core.data.UserDataManager.invalidateSyncManifest()
                 Toast.makeText(ctx, R.string.done, Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
                 Timber.e(e, "Rime Ice update failed")

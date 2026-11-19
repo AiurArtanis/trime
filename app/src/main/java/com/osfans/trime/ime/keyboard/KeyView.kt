@@ -16,10 +16,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.KeyEvent
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
-import com.osfans.trime.daemon.RimeDaemon
-import com.osfans.trime.data.prefs.AppPrefs
-import com.osfans.trime.data.theme.FontManager
-import com.osfans.trime.data.theme.KeyActionManager
+import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.popup.PopupAction
 import com.osfans.trime.ime.popup.PopupDelegate
@@ -30,6 +27,7 @@ import timber.log.Timber
 @SuppressLint("ClickableViewAccessibility", "ViewConstructor")
 class KeyView(
     context: Context,
+    private val theme: Theme,
     private val key: Key,
     private val keyboard: Keyboard,
     private val keyboardView: KeyboardView,
@@ -41,8 +39,6 @@ class KeyView(
 
     private val popup: PopupDelegate
         get() = keyboardView.popup
-
-    private val rime get() = RimeDaemon.getFirstSessionOrNull()!!
 
     private val deletedTextBuffer = ArrayDeque<String>()
     private var compositionHold = false
@@ -88,8 +84,8 @@ class KeyView(
 
         onPress = {
             compositionCleared = false
-            compositionHold = key.click?.let { it.code == KeyEvent.KEYCODE_DEL && it.modifier == 0 } == true &&
-                rime.run { statusCached.isComposing }
+            compositionHold = theme.name == "Astra" && key.click?.let { it.code == KeyEvent.KEYCODE_DEL && it.modifier == 0 } == true &&
+                (com.osfans.trime.daemon.RimeDaemon.getFirstSessionOrNull()?.run { statusCached.isComposing } == true)
             customLongPressTimeout = if (compositionHold) 600 else null
             if (keyboard.firstPressedKeyIndex == -1) keyboard.firstPressedKeyIndex = id
             setPressedState(true)
@@ -118,7 +114,7 @@ class KeyView(
                     val triggerAction = PopupAction.TriggerAction(id)
                     popup.listener.onPopupAction(triggerAction)
                     triggerAction.outAction?.let { action ->
-                        keyboardActionListener.onAction(KeyActionManager.getAction(action))
+                        keyboardActionListener.onAction(theme.resolveAction(action))
                         dismissPopupPreview()
                     }
                     setPressedState(false)
@@ -132,10 +128,12 @@ class KeyView(
                         val actionBehavior = if (pressedIdx != -1 && pressedIdx != id) KeyBehavior.COMBO else behavior
                         key.getAction(actionBehavior)?.let { processKeyAction(it, actionBehavior) }
                     }
+
                     KeyBehavior.DOUBLE_CLICK, KeyBehavior.LAZY_DOUBLE_CLICK,
                     KeyBehavior.SWIPE_UP, KeyBehavior.SWIPE_DOWN, KeyBehavior.SWIPE_LEFT, KeyBehavior.SWIPE_RIGHT,
                     ->
                         key.getAction(behavior)?.let { processKeyAction(it, behavior) }
+
                     else -> {}
                 }
 
@@ -153,8 +151,8 @@ class KeyView(
         onSlide = { delta, _, _ ->
             if (isSlideCursor) {
                 when {
-                    delta > 0 -> keyboardActionListener.onAction(KeyActionManager.getAction("Right"))
-                    delta < 0 -> keyboardActionListener.onAction(KeyActionManager.getAction("Left"))
+                    delta > 0 -> keyboardActionListener.onAction(theme.resolveAction("Right"))
+                    delta < 0 -> keyboardActionListener.onAction(theme.resolveAction("Left"))
                 }
             } else if (isSlideDelete) {
                 val ic = service.currentInputConnection
@@ -337,7 +335,7 @@ class KeyView(
         val textColor = key.getTextColor()
         val textSize = sp(key.keyTextSize.takeIf { it > 0 } ?: if (label.length > 1 && !label.isIconFont) keyboardView.keyLongTextSize else keyboardView.keyTextSize)
 
-        if (label == "☯") {
+        if (theme.name == "Astra" && label == "☯") {
             val centerX = (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(key.keyTextOffsetX)
             val centerY = (height - paddingTop - paddingBottom) / 2f + paddingTop + sp(key.keyTextOffsetY)
             val half = textSize / 2
@@ -350,7 +348,7 @@ class KeyView(
             textPaint.apply {
                 color = textColor
                 this.textSize = textSize
-                typeface = FontManager.getTypeface("key_font")
+                typeface = theme.fonts.key
                 clearShadowLayer()
             }
 
@@ -420,7 +418,7 @@ class KeyView(
             symbolPaint.apply {
                 color = textColor
                 this.textSize = textSize
-                typeface = FontManager.getTypeface("symbol_font")
+                typeface = theme.fonts.symbol
             }
 
             val lines = text.split("\n")
