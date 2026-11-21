@@ -1,5 +1,13 @@
 # 同文输入法(Astra) 开发交接
 
+## 2026-11-21 astra-19 候选：预编译 OpenCC 词典，待三星覆盖验收
+
+- 纯上游 `src` 已快进到 `8ef9ff82`。候选分支 `integrate/astra19-opencc-20261121` 真实合入该提交，APK 源码 `b2a9131c`。主线与备份 `archive/astra18-before-opencc-20261121` 保持已验证的 Astra 18（`b01fbbc7`）。
+- 上游新增 1 项：在构建机运行 OpenCC 的 CMake 数据规则，随包交付 22 个二进制词典，补齐简转繁、台湾、香港等五份配置缺少的地区短语生成词典。与 Astra 18 的 APK 对照，共享资源只新增 22 个词典、移除 21 个旧文本文件；未改数据库、用户词库、布局或同步代码。本轮不触碰手机数据。
+- Windows 构建使用环境脚本、x64 VS 2019 Build Tools 的 vcvars64、CL=/utf-8、显式 HOST_PYTHON 和仓库 Gradle 9.8.2 wrapper。393 项应用测试全部通过；spotlessCheck 通过；lint 0 errors / 69 warnings；最终 APK 的 56 个资源通过清单摘要校验。用本机 OpenCC 加载最终 APK 解出的词典，s2t、s2tw、s2twp、s2hk、s2hkp 均能将“汉语”转换为“漢語”。这不是 Android 覆盖升级或输入验收。
+- 仅 ARM64；包名和证书与 Astra 18 相同，versionCode 20270106 高于已预留恢复版 20270105。候选位于 NAS 的 trime-debug/candidates/trime-astra-19-opencc-candidate-arm64-v8a-debug.apk，同目录附 .sha256；回读 SHA256 为 `87311f2f6c4010dc1a34376b2178caaa83af6aaae8a5253d8b895dacc0037b9f`。构建日志 E:/trime-build-env/astra19-validation.log。确认无其他构建后正常停止守护进程，PID 66144、64336、61900 已退出。
+- 当前 USB 和无线 ADB 都没有发现手机。下次先备份设备现有数据，准备同签名且 versionCode 至少 20270107 的可覆盖恢复包，再做 18 → 19 原地升级，验证设置冷启动、键盘、拼音上屏、简繁转换、共享资源替换及原有用户数据。通过后才将候选并入 develop 并交付正式包；不要把本候选当成已验收版本。
+
 ## 2026-11-19 astra-18：恢复上游主线，三星实机覆盖验证
 
 - 基线 `b1c2412e`（上游 11 月 15 日），较 `a6307961` 前进 13 个提交；包含分词失败保护和后台预览、键盘与图像的内存优化、librime/spdlog、区域设置修复。完整保留上游提交；按住退格清除组合输入仍走 Astra 自定义手势。
